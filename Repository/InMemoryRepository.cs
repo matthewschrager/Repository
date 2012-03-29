@@ -31,9 +31,9 @@ namespace Repository
             mData.Add(Tuple.Create(KeySelector(value).ToList(), value));
         }
         //===============================================================
-        public void Remove(T value)
+        public void Remove(params Object[] keys)
         {
-            mData.RemoveAll(x => x.Item1.SequenceEqual(KeySelector(value)));
+            mData.RemoveAll(x => x.Item1.SequenceEqual(keys));
         }
         //===============================================================
         public IObjectContext<T> Find(params Object[] keys)
@@ -49,12 +49,12 @@ namespace Repository
         //===============================================================
     }
 
-    public class InMemoryObjectContext<T> : IObjectContext<T>
+    public class InMemoryObjectContext<T> : IObjectContext<T> where T : class
     {
         //===============================================================
         public InMemoryObjectContext(T value)
         {
-            Value = value;
+            Object = value;
         }
         //===============================================================
         /// <summary>
@@ -66,7 +66,7 @@ namespace Repository
             // Do nothing, since in memory objects are automatically disposed
         }
         //===============================================================
-        public T Value { get; private set; }
+        public T Object { get; private set; }
         //===============================================================
         public void SaveChanges()
         {

@@ -29,6 +29,10 @@ namespace Repository
             KeySelector = keySelector;
         }
         //===============================================================
+        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, Func<TContext> contextFactory = null)
+            : this(setSelector, x => new[] { keySelector(x) }, contextFactory)
+        {}
+        //===============================================================
         private Func<TContext> ContextFactory { get; set; }
         //===============================================================
         private Func<TContext, DbSet<TValue>> SetSelector { get; set; }
@@ -49,12 +53,12 @@ namespace Repository
             }
         }
         //===============================================================
-        public void Remove(TValue value)
+        public void Remove(params Object[] keys)
         {
             using (var c = ContextFactory())
             {
                 var set = SetSelector(c);
-                var obj = set.Find(KeySelector(value));
+                var obj = set.Find(keys);
                 set.Remove(obj);
                 
                 c.SaveChanges();
@@ -76,15 +80,16 @@ namespace Repository
         //===============================================================
     }
 
-    public class EFObjectContext<T> : IObjectContext<T>
+    public class EFObjectContext<T> : IObjectContext<T> where T : class
     {
         //===============================================================
         public EFObjectContext(T value, DbContext context)
         {
-            Value = value;
+            Object = value;
+            Context = context;
         }
         //===============================================================
-        public T Value { get; private set; }
+        public T Object { get; private set; }
         //===============================================================
         private DbContext Context { get; set; }
         //===============================================================

@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Repository
 {
-    public interface IObjectContext<out T> : IDisposable
+    public interface IObjectContext<out T> : IDisposable where T : class
     {
         //===============================================================
-        T Value { get; }
+        T Object { get; }
         //===============================================================
         void SaveChanges();
         //===============================================================

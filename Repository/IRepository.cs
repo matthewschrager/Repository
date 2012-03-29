@@ -7,12 +7,12 @@ using System.Text;
 
 namespace Repository
 {
-    public interface IRepository<T>
+    public interface IRepository<T> where T : class
     {
         //===============================================================
         void Store(T value);
         //===============================================================
-        void Remove(T value);
+        void Remove(params Object[] keys);
         //===============================================================
         IObjectContext<T> Find(params Object[] keys);
         //===============================================================
