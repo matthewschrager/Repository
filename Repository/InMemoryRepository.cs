@@ -36,6 +36,11 @@ namespace Repository
             mData.RemoveAll(x => x.Item1.SequenceEqual(keys));
         }
         //===============================================================
+        public bool Exists(params Object[] keys)
+        {
+            return mData.Exists(x => x.Item1.SequenceEqual(keys));
+        }
+        //===============================================================
         public IObjectContext<T> Find(params Object[] keys)
         {
             var obj = mData.SingleOrDefault(x => x.Item1.SequenceEqual(keys));
