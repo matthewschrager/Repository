@@ -93,7 +93,9 @@ namespace Repository.RavenDB
         //===============================================================
         public IObjectContext<IQueryable<T>> GetItemsContext()
         {
-            throw new NotImplementedException();
+            var session = DocumentStore.OpenSession();
+            var obj = session.Query<T>();
+            return new RavenObjectContext<IQueryable<T>>(obj, session);
         }
         //===============================================================
     }
