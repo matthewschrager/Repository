@@ -6,10 +6,10 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>http://www.gnu.org/licenses/gpl.html</licenseUrl>
-    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <licenseUrl>http://pastebin.com/Aaxx2AMM</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added RavenDB client depdendency</releaseNotes>
+    <releaseNotes>Changed to BSD license.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository RavenDB</tags>
 	<dependencies>
