@@ -4,6 +4,7 @@ using System.Linq;
 using Raven.Abstractions.Commands;
 using Raven.Client;
 using Raven.Client.Document;
+using Raven.Client.Embedded;
 
 namespace Repository.RavenDB
 {
@@ -19,14 +20,14 @@ namespace Repository.RavenDB
             DocumentStore.Initialize();
         }
         //===============================================================
-        public static RavenRepository<T> FromConnectionString(String connectionStr, Func<T, Object[]> keySelector)
+        public static RavenRepository<T> FromUrlAndApiKey(String url, String apiKey, Func<T, Object[]> keySelector)
         {
-            return new RavenRepository<T>(new DocumentStore { Url = connectionStr }, keySelector);
+            return new RavenRepository<T>(new DocumentStore { Url = url, ApiKey = apiKey }, keySelector);
         }
         //===============================================================
-        public static RavenRepository<T> FromConnectionString(String connectionStr, Func<T, Object> keySelector)
+        public static RavenRepository<T> FromUrlAndApiKey(String url, String apiKey, Func<T, Object> keySelector)
         {
-            return FromConnectionString(connectionStr, x => new[] { keySelector(x) });
+            return FromUrlAndApiKey(url, apiKey, x => new[] { keySelector(x) });
         }
         //===============================================================
         public static RavenRepository<T> FromNamedConnectionString(String connectionStringName, Func<T, Object[]> keySelector)
@@ -34,9 +35,19 @@ namespace Repository.RavenDB
             return new RavenRepository<T>(new DocumentStore { ConnectionStringName = connectionStringName }, keySelector);
         }
         //===============================================================
-        public static RavenRepository<T>FromNamedConnectionString(String connectionStringName, Func<T, Object> keySelector)
+        public static RavenRepository<T> FromNamedConnectionString(String connectionStringName, Func<T, Object> keySelector)
         {
             return FromNamedConnectionString(connectionStringName, x => new[] { keySelector(x) });
+        }
+        //===============================================================
+        public static RavenRepository<T> AsEmbeddedDocumentStore(String dataDirectory, Func<T, Object[]> keySelector)
+        {
+            return new RavenRepository<T>(new EmbeddableDocumentStore { DataDirectory = dataDirectory }, keySelector);
+        }
+        //===============================================================
+        public static RavenRepository<T> AsEmbeddedDocumentStore(String dataDirectory, Func<T, Object> keySelector)
+        {
+            return AsEmbeddedDocumentStore(dataDirectory, x => new[] { keySelector(x) });
         }
         //===============================================================
         private String KeyGenerator(IEnumerable<Object> keys)
