@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 
@@ -45,6 +46,18 @@ namespace Repository.EntityFramework
                     return;
 
                 set.Add(value);
+                c.SaveChanges();
+            }
+        }
+        //===============================================================
+        public void Store(IEnumerable<TValue> values)
+        {
+            using (var c = ContextFactory())
+            {
+                var set = SetSelector(c);
+                foreach (var x in values)
+                    set.Add(x);
+
                 c.SaveChanges();
             }
         }

@@ -9,14 +9,13 @@
     <licenseUrl>http://pastebin.com/Aaxx2AMM</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added support for embedded RavenDB instances.</releaseNotes>
+    <releaseNotes>Added logic to handle '/' characters in generated keys.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository RavenDB</tags>
 	<dependencies>
 		<dependency id="Repository" />
 		<dependency id="RavenDB" version="[1.0.701]" />
 		<dependency id="RavenDB-Client" version="[1.0.701]" />
-		<dependency id="RavenDB-Embedded" version="[1.0.701]" />
 	</dependencies>
   </metadata>
 </package>

@@ -9,7 +9,7 @@
     <licenseUrl>http://pastebin.com/Aaxx2AMM</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Changed to BSD license.</releaseNotes>
+    <releaseNotes>Added batch insert capability.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository EntityFramework</tags>
 	<dependencies>

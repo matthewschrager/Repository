@@ -40,19 +40,22 @@ namespace Repository.RavenDB
             return FromNamedConnectionString(connectionStringName, x => new[] { keySelector(x) });
         }
         //===============================================================
-        public static RavenRepository<T> AsEmbeddedDocumentStore(String dataDirectory, Func<T, Object[]> keySelector)
-        {
-            return new RavenRepository<T>(new EmbeddableDocumentStore { DataDirectory = dataDirectory }, keySelector);
-        }
-        //===============================================================
-        public static RavenRepository<T> AsEmbeddedDocumentStore(String dataDirectory, Func<T, Object> keySelector)
-        {
-            return AsEmbeddedDocumentStore(dataDirectory, x => new[] { keySelector(x) });
-        }
-        //===============================================================
         private String KeyGenerator(IEnumerable<Object> keys)
         {
-            var key = DocumentStore.Conventions.GetTypeTagName(typeof(T)) + "/" + keys.Select(x => x.ToString()).Aggregate((x, y) => x + "/" + y);
+            var strings = new List<String>();
+            foreach (var x in keys)
+            {
+                if (x.GetType().Equals(typeof(DateTime)))
+                    strings.Add(((DateTime)x).Ticks.ToString());
+                else
+                    strings.Add(x.ToString());
+            }
+
+            // Replace any slashes with hyphens, because slashes create indexes
+            //var strings = keys.Select(x => (x is DateTime) ? ((DateTime)x).Ticks.ToString() : x.ToString()).ToList();
+            strings = strings.Select(x => x.Replace('/', '-').Replace('\\', '-')).ToList();
+
+            var key = DocumentStore.Conventions.GetTypeTagName(typeof(T)) + "/" + strings.Aggregate((x, y) => x + "/" + y);
             return key;
         }
         //===============================================================
@@ -74,6 +77,25 @@ namespace Repository.RavenDB
             catch (Exception e)
             {
                 throw new Exception("Could not store value in database. Error: " + e.Message, e);
+            }
+        }
+        //===============================================================
+        public void Store(IEnumerable<T> values)
+        {
+            try
+            {
+                using (var session = DocumentStore.OpenSession())
+                {
+                    foreach (var x in values)
+                        session.Store(x);
+
+                    session.SaveChanges();
+                }
+            }
+
+            catch (Exception e)
+            {
+                throw new Exception("Could not store values in database. Error: " + e.Message, e);
             }
         }
         //===============================================================

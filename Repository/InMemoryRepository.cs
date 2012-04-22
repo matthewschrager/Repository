@@ -31,6 +31,12 @@ namespace Repository
             mData.Add(Tuple.Create(KeySelector(value).ToList(), value));
         }
         //===============================================================
+        public void Store(IEnumerable<T> values)
+        {
+            foreach (var x in values)
+                Store(x);
+        }
+        //===============================================================
         public void Remove(params Object[] keys)
         {
             mData.RemoveAll(x => x.Item1.SequenceEqual(keys));
