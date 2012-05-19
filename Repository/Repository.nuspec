@@ -9,7 +9,7 @@
     <licenseUrl>http://pastebin.com/Aaxx2AMM</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added batch insert capability.</releaseNotes>
+    <releaseNotes>Removed unnecessary RavenDB dependency.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository</tags>
   </metadata>

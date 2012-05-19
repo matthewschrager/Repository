@@ -4,7 +4,6 @@ using System.Linq;
 using Raven.Abstractions.Commands;
 using Raven.Client;
 using Raven.Client.Document;
-using Raven.Client.Embedded;
 
 namespace Repository.RavenDB
 {
@@ -52,8 +51,7 @@ namespace Repository.RavenDB
             }
 
             // Replace any slashes with hyphens, because slashes create indexes
-            //var strings = keys.Select(x => (x is DateTime) ? ((DateTime)x).Ticks.ToString() : x.ToString()).ToList();
-            strings = strings.Select(x => x.Replace('/', '-').Replace('\\', '-')).ToList();
+            strings = strings.Select(x => x.Replace('/', '-').Replace('\\', '-').Replace(' ', '-')).ToList();
 
             var key = DocumentStore.Conventions.GetTypeTagName(typeof(T)) + "/" + strings.Aggregate((x, y) => x + "/" + y);
             return key;

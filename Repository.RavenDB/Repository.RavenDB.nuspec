@@ -9,13 +9,12 @@
     <licenseUrl>http://pastebin.com/Aaxx2AMM</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added logic to handle '/' characters in generated keys.</releaseNotes>
+    <releaseNotes>Updated to RavenDB version 1.0.888</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository RavenDB</tags>
 	<dependencies>
 		<dependency id="Repository" />
-		<dependency id="RavenDB" version="[1.0.701]" />
-		<dependency id="RavenDB-Client" version="[1.0.701]" />
+		<dependency id="RavenDB.Client" />
 	</dependencies>
   </metadata>
 </package>
