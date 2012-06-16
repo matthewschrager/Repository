@@ -91,10 +91,10 @@ namespace Repository.EntityFramework
             return new EFObjectContext<TValue>(set.Find(keys), c);
         }
         //===============================================================
-        public IObjectContext<IQueryable<TValue>> GetItemsContext()
+        public IEnumerableObjectContext<TValue> GetItemsContext()
         {
             var context = ContextFactory();
-            return new EFObjectContext<IQueryable<TValue>>(SetSelector(context), context);
+            return new EFEnumerableObjectContext<TValue>(SetSelector(context), context);
         }
         //===============================================================
         public void Update<T>(T value, params Object[] keys)
@@ -151,6 +151,31 @@ namespace Repository.EntityFramework
         public void Dispose()
         {
             Context.Dispose();
+        }
+        //===============================================================
+    }
+
+    public class EFEnumerableObjectContext<T> : IEnumerableObjectContext<T> where T : class
+    {
+        //===============================================================
+        public EFEnumerableObjectContext(IQueryable<T> objects, DbContext context)
+        {
+            Context = context;
+            Objects = objects;
+        }
+        //===============================================================
+        private DbContext Context { get; set; }
+        //===============================================================
+        public void Dispose()
+        {
+            Context.Dispose();
+        }
+        //===============================================================
+        public IQueryable<T> Objects { get; private set; }
+        //===============================================================
+        public void SaveChanges()
+        {
+            Context.SaveChanges();
         }
         //===============================================================
     }

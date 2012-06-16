@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 
@@ -15,6 +16,15 @@ namespace Repository
         void Update<TValue>(TValue value);
         //===============================================================
         void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter);
+        //===============================================================
+    }
+
+    public interface IEnumerableObjectContext<T> : IDisposable where T : class
+    {
+        //===============================================================
+        IQueryable<T> Objects { get; }
+        //===============================================================
+        void SaveChanges();
         //===============================================================
     }
 }

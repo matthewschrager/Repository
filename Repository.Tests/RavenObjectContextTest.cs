@@ -1,19 +1,18 @@
-﻿using System.Dynamic;
-using Repository;
+﻿using Repository.RavenDB;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
+using Raven.Client;
 
 namespace Repository.Tests
 {
     
     
     /// <summary>
-    ///This is a test class for InMemoryRepositoryTest and is intended
-    ///to contain all InMemoryRepositoryTest Unit Tests
+    ///This is a test class for RavenObjectContextTest and is intended
+    ///to contain all RavenObjectContextTest Unit Tests
     ///</summary>
     [TestClass()]
-    public class InMemoryRepositoryTest
+    public class RavenObjectContextTest
     {
 
 
@@ -66,19 +65,18 @@ namespace Repository.Tests
         #endregion
 
         [TestMethod()]
-        public void UpdateTest()
+        public void UpdateFromJSONTest()
         {
-            var repository = new InMemoryRepository<TestClass>(x => x.Key);
-            repository.Store(new TestClass());
-            repository.Update(new { Value2 = DateTime.MaxValue }, 1);
+            var repository = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
 
-            var val = repository.Find(1).Object;
-            Assert.AreEqual(val.Value2, DateTime.MaxValue);
+            var obj = new TestClass();
+            repository.Store(obj);
 
-            var obj = new { Value2 = DateTime.MaxValue };
-            repository.Update(obj, x => x.Property, 1);
-            Assert.AreEqual(val.Property.Value2, DateTime.MaxValue);
-            Assert.AreEqual(val.Property.Value1.Value, 1);
+            repository.UpdateFromJSON("Property", "{ Value1: 2 }", 1);
+            using (var dbObj = repository.Find(1))
+            {
+                Assert.AreEqual(dbObj.Object.Property.Value1, 2);
+            }
 
         }
     }

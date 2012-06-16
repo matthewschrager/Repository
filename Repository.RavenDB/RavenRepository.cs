@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Raven.Abstractions.Commands;
+using Raven.Abstractions.Data;
 using Raven.Client;
 using Raven.Client.Document;
 
@@ -119,14 +122,14 @@ namespace Repository.RavenDB
         {
             var session = DocumentStore.OpenSession();
             var obj = session.Load<T>(KeyGenerator(keys));
-            return new RavenObjectContext<T>(obj, session);
+            return new RavenObjectContext<T>(obj, session, x => KeyGenerator(KeySelector(x)));
         }
         //===============================================================
-        public IObjectContext<IQueryable<T>> GetItemsContext()
+        public IEnumerableObjectContext<T> GetItemsContext()
         {
             var session = DocumentStore.OpenSession();
             var obj = session.Query<T>();
-            return new RavenObjectContext<IQueryable<T>>(obj, session);
+            return new RavenEnumerableObjectContext<T>(obj, session);
         }
         //===============================================================
         public void Update<TValue>(TValue value, params Object[] keys)
@@ -147,16 +150,37 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
+        public void UpdateFromJSON(String json, params Object[] keys)
+        {
+            using (var obj = Find(keys) as RavenObjectContext<T>)
+            {
+                obj.UpdateFromJSON(json);
+                obj.SaveChanges();
+            }
+        }
+        //===============================================================
+        public void UpdateFromJSON(String pathToProperty, String json, params Object[] keys)
+        {
+            using (var obj = Find(keys) as RavenObjectContext<T>)
+            {
+                obj.UpdateFromJSON(pathToProperty, json);
+                obj.SaveChanges();
+            }
+        }
+        //===============================================================
     }
 
     public class RavenObjectContext<T> : IObjectContext<T> where T : class
     {
         //===============================================================
-        public RavenObjectContext(T obj, IDocumentSession session)
+        public RavenObjectContext(T obj, IDocumentSession session, Func<T, String> keyGenerator)
         {
             Object = obj;
             Session = session;
+            KeyGenerator = keyGenerator;
         }
+        //===============================================================
+        private Func<T, String> KeyGenerator { get; set; }
         //===============================================================
         private IDocumentSession Session { get; set; }
         //===============================================================
@@ -184,6 +208,79 @@ namespace Repository.RavenDB
         public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
         {
             AutoMapper.Mapper.DynamicMap(value, getter(Object));
+        }
+        //===============================================================
+        public void UpdateFromJSON(String json)
+        {
+            var obj = JObject.Parse(json);
+            var patches = obj.Properties().Where(x => Object.GetType().GetProperty(x.Name) != null)
+                                          .Select(x => new PatchRequest { Type = PatchCommandType.Set, Name = x.Name, Value = x.Value.ToString() }).ToArray();
+
+            Session.Advanced.DatabaseCommands.Patch(KeyGenerator(Object), patches);
+        }
+        //===============================================================    
+        public void UpdateFromJSON(String pathToProperty, String json)
+        {
+            var propertyNames = pathToProperty.Split('.');
+            if (propertyNames.Length == 0)
+                return;
+
+            var baseRequest = new PatchRequest
+                               {
+                                   Type = PatchCommandType.Modify,
+                                   Name = propertyNames.First(),
+                                   Nested = new PatchRequest[1],
+                               };
+
+            var currRequest = baseRequest;
+            var currProperty = Object.GetType().GetProperty(propertyNames.First());
+            foreach(var propertyName in propertyNames.Skip(1).Take(propertyNames.Length - 1))
+            {
+                if (currProperty == null)
+                    return;
+
+                currRequest.Nested[0] = new PatchRequest
+                                        {
+                                            Type = PatchCommandType.Modify,
+                                            Name = propertyName,
+                                            Nested = new PatchRequest[1],
+                                        };
+
+                currRequest = currRequest.Nested[0];
+                currProperty = currProperty.PropertyType.GetProperty(propertyName);
+            }
+
+            var obj = JObject.Parse(json);
+            var patches = obj.Properties().Where(x => currProperty.PropertyType.GetProperty(x.Name) != null)
+                                          .Select(x => new PatchRequest { Type = PatchCommandType.Set, Name = x.Name, Value = x.Value.ToString() }).ToArray();
+            currRequest.Nested = patches;
+
+            Session.Advanced.DatabaseCommands.Patch(KeyGenerator(Object), new[] { baseRequest });
+        }
+        //===============================================================
+    }
+
+    public class RavenEnumerableObjectContext<T> : IEnumerableObjectContext<T> where T : class 
+    {
+        //===============================================================
+        public RavenEnumerableObjectContext(IQueryable<T> objects, IDocumentSession session)
+        {
+            Objects = objects;
+            Session = session;
+        }
+        //===============================================================
+        private IDocumentSession Session { get; set; }
+        //===============================================================
+        public IQueryable<T> Objects { get; private set; }
+        //===============================================================
+        public void Dispose()
+        {
+            Session.Dispose();
+        }
+        //===============================================================
+        public void SaveChanges()
+        {
+            Session.SaveChanges();
         }
         //===============================================================
     }

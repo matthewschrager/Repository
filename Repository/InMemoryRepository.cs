@@ -53,9 +53,9 @@ namespace Repository
             return new InMemoryObjectContext<T>(obj != null ? obj.Item2 : (T)null);
         }
         //===============================================================
-        public IObjectContext<IQueryable<T>> GetItemsContext()
+        public IEnumerableObjectContext<T> GetItemsContext()
         {
-            return new InMemoryObjectContext<IQueryable<T>>(mData.Select(x => x.Item2).AsQueryable());
+            return new InMemoryEnumerableObjectContext<T>(mData.Select(x => x.Item2).AsQueryable());
         }
         //===============================================================
         public void Update<TValue>(TValue value, params Object[] keys)
@@ -110,6 +110,28 @@ namespace Repository
         public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
         {
             AutoMapper.Mapper.DynamicMap(value, getter(Object));
+        }
+        //===============================================================
+    }
+
+    public class InMemoryEnumerableObjectContext<T> : IEnumerableObjectContext<T> where T : class
+    {
+        //===============================================================
+        public InMemoryEnumerableObjectContext(IQueryable<T> objects)
+        {
+            Objects = objects;
+        }
+        //===============================================================
+        public void Dispose()
+        {
+            // Do nothing, since in-memory objects are automatically disposed
+        }
+        //===============================================================
+        public IQueryable<T> Objects { get; private set; }
+        //===============================================================
+        public void SaveChanges()
+        {
+            // Do nothing, since in-memory takes care of it
         }
         //===============================================================
     }
