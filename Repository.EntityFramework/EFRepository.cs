@@ -97,6 +97,23 @@ namespace Repository.EntityFramework
             return new EFObjectContext<IQueryable<TValue>>(SetSelector(context), context);
         }
         //===============================================================
+        public void Update<T>(T value, params Object[] keys)
+        {
+            using (var obj = Find(keys))
+            {
+                obj.Update(value);
+                obj.SaveChanges();
+            }
+        }
+        //===============================================================
+        public void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
+        {
+            using (var obj = Find(keys))
+            {
+                obj.Update(value, getter);
+            }
+        }
+        //===============================================================
     }
 
     public class EFObjectContext<T> : IObjectContext<T> where T : class
@@ -115,6 +132,16 @@ namespace Repository.EntityFramework
         public void SaveChanges()
         {
             Context.SaveChanges();
+        }
+        //===============================================================
+        public void Update<TValue>(TValue value)
+        {
+            Object = AutoMapper.Mapper.DynamicMap<T>(value);
+        }
+        //===============================================================
+        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
+        {
+            AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
         //===============================================================
         /// <summary>

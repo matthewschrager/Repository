@@ -18,6 +18,10 @@ namespace Repository
         //===============================================================
         bool Exists(params Object[] keys);
         //===============================================================
+        void Update<TValue>(TValue value, params Object[] keys);
+        //===============================================================
+        void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys);
+        //===============================================================
         IObjectContext<T> Find(params Object[] keys);
         //===============================================================
         IObjectContext<IQueryable<T>> GetItemsContext();

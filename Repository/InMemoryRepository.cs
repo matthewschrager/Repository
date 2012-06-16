@@ -58,6 +58,24 @@ namespace Repository
             return new InMemoryObjectContext<IQueryable<T>>(mData.Select(x => x.Item2).AsQueryable());
         }
         //===============================================================
+        public void Update<TValue>(TValue value, params Object[] keys)
+        {
+            using (var obj = Find(keys))
+            {
+                obj.Update(value);
+                obj.SaveChanges();
+            }
+        }
+        //===============================================================
+        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
+        {
+            using (var obj = Find(keys))
+            {
+                obj.Update(value, getter);
+                obj.SaveChanges();
+            }
+        }
+        //===============================================================
     }
 
     public class InMemoryObjectContext<T> : IObjectContext<T> where T : class
@@ -82,6 +100,16 @@ namespace Repository
         public void SaveChanges()
         {
             // Do nothing - stuff is automatically saved.
+        }
+        //===============================================================
+        public void Update<TValue>(TValue value)
+        {
+            AutoMapper.Mapper.DynamicMap(value, Object);
+        }
+        //===============================================================
+        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
+        {
+            AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
         //===============================================================
     }

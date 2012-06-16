@@ -129,6 +129,24 @@ namespace Repository.RavenDB
             return new RavenObjectContext<IQueryable<T>>(obj, session);
         }
         //===============================================================
+        public void Update<TValue>(TValue value, params Object[] keys)
+        {
+            using (var obj = Find(keys))
+            {
+                obj.Update(value);
+                obj.SaveChanges();
+            }
+        }
+        //===============================================================
+        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
+        {
+            using (var obj = Find(keys))
+            {
+                obj.Update(value, getter);
+                obj.SaveChanges();
+            }
+        }
+        //===============================================================
     }
 
     public class RavenObjectContext<T> : IObjectContext<T> where T : class
@@ -156,6 +174,16 @@ namespace Repository.RavenDB
         public void SaveChanges()
         {
             Session.SaveChanges();
+        }
+        //===============================================================
+        public void Update<TValue>(TValue value)
+        {
+            Object = AutoMapper.Mapper.DynamicMap<T>(value);
+        }
+        //===============================================================
+        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
+        {
+            AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
         //===============================================================
     }
