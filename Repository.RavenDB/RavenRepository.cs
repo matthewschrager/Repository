@@ -7,6 +7,7 @@ using Raven.Abstractions.Commands;
 using Raven.Abstractions.Data;
 using Raven.Client;
 using Raven.Client.Document;
+using Raven.Json.Linq;
 
 namespace Repository.RavenDB
 {
@@ -150,24 +151,28 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void UpdateFromJSON(String json, params Object[] keys)
+        public void UpdateFromJSON(String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
-                obj.UpdateFromJSON(json);
-                obj.SaveChanges();
+                obj.UpdateFromJSON(json, updateType);
             }
         }
         //===============================================================
-        public void UpdateFromJSON(String pathToProperty, String json, params Object[] keys)
+        public void UpdateFromJSON(String pathToProperty, String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
-                obj.UpdateFromJSON(pathToProperty, json);
-                obj.SaveChanges();
+                obj.UpdateFromJSON(pathToProperty, json, updateType);
             }
         }
         //===============================================================
+    }
+
+    public enum UpdateType
+    {
+        Add,
+        Set,
     }
 
     public class RavenObjectContext<T> : IObjectContext<T> where T : class
@@ -210,21 +215,44 @@ namespace Repository.RavenDB
             AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
         //===============================================================
-        public void UpdateFromJSON(String json)
+        private PatchCommandType ToPatchType(UpdateType updateType)
         {
+            switch (updateType)
+            {
+                case UpdateType.Add:
+                    return PatchCommandType.Add;
+                
+                case UpdateType.Set:
+                default:
+                    return PatchCommandType.Set;
+            }
+        }
+        //===============================================================
+        public void UpdateFromJSON(String json, UpdateType updateType = UpdateType.Set)
+        {
+            if (Object == null)
+                return;
+
             var obj = JObject.Parse(json);
             var patches = obj.Properties().Where(x => Object.GetType().GetProperty(x.Name) != null)
-                                          .Select(x => new PatchRequest { Type = PatchCommandType.Set, Name = x.Name, Value = x.Value.ToString() }).ToArray();
+                                          .Select(x => new PatchRequest { Type = ToPatchType(updateType), Name = x.Name, Value = RavenJToken.Parse(x.Value.ToString()) }).ToArray();
 
             Session.Advanced.DatabaseCommands.Patch(KeyGenerator(Object), patches);
         }
         //===============================================================    
-        public void UpdateFromJSON(String pathToProperty, String json)
+        public void UpdateFromJSON(String pathToProperty, String json, UpdateType updateType = UpdateType.Set)
         {
-            var propertyNames = pathToProperty.Split('.');
-            if (propertyNames.Length == 0)
+            if (Object == null)
                 return;
 
+            if (String.IsNullOrEmpty(pathToProperty))
+            {
+                UpdateFromJSON(json);
+                return;
+            }
+
+            var patchCommandType = ToPatchType(updateType);
+            var propertyNames = pathToProperty.Split('.');
             var baseRequest = new PatchRequest
                                {
                                    Type = PatchCommandType.Modify,
@@ -252,7 +280,7 @@ namespace Repository.RavenDB
 
             var obj = JObject.Parse(json);
             var patches = obj.Properties().Where(x => currProperty.PropertyType.GetProperty(x.Name) != null)
-                                          .Select(x => new PatchRequest { Type = PatchCommandType.Set, Name = x.Name, Value = x.Value.ToString() }).ToArray();
+                                          .Select(x => new PatchRequest { Type = patchCommandType, Name = x.Name, Value = x.Value.ToString() }).ToArray();
             currRequest.Nested = patches;
 
             Session.Advanced.DatabaseCommands.Patch(KeyGenerator(Object), new[] { baseRequest });

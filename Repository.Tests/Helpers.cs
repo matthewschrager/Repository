@@ -14,6 +14,7 @@ namespace Repository.Tests
             Value1 = 1;
             Value2 = DateTime.MinValue;
             Property = new TestProperty();
+            List = new List<TestProperty>();
         }
         //===============================================================
         public int Key { get; set; }
@@ -24,6 +25,7 @@ namespace Repository.Tests
         //===============================================================
         public TestProperty Property { get; set; }
         //===============================================================
+        public List<TestProperty> List { get; set; }
     }
 
     class TestProperty

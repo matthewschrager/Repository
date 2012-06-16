@@ -1,4 +1,5 @@
-﻿using Repository.RavenDB;
+﻿using System.Linq;
+using Repository.RavenDB;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using Raven.Client;
@@ -72,10 +73,17 @@ namespace Repository.Tests
             var obj = new TestClass();
             repository.Store(obj);
 
-            repository.UpdateFromJSON("Property", "{ Value1: 2 }", 1);
+            repository.UpdateFromJSON("Property", "{ Value1: 2 }", UpdateType.Set, 1);
             using (var dbObj = repository.Find(1))
             {
                 Assert.AreEqual(dbObj.Object.Property.Value1, 2);
+            }
+
+            repository.UpdateFromJSON("{ List: { Value1: 2 } }", UpdateType.Add, 1);
+            using (var dbObj = repository.Find(1))
+            {
+                Assert.AreEqual(dbObj.Object.List.Count, 1);
+                Assert.AreEqual(dbObj.Object.List.First().Value1, 2);
             }
 
         }
