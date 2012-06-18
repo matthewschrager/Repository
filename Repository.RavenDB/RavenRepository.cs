@@ -262,7 +262,7 @@ namespace Repository.RavenDB
 
             var currRequest = baseRequest;
             var currProperty = Object.GetType().GetProperty(propertyNames.First());
-            foreach(var propertyName in propertyNames.Skip(1).Take(propertyNames.Length - 1))
+            foreach(var propertyName in propertyNames.Skip(1).Take(propertyNames.Length - 2))
             {
                 if (currProperty == null)
                     return;
