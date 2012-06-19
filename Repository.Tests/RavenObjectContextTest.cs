@@ -99,6 +99,21 @@ namespace Repository.Tests
             {
                 Assert.AreEqual(dbObj.Object.Data.Comments.Count, 1);
             }
+
+            var workOrderRepo = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
+            var workOrder = new WorkOrder();
+            workOrder.ID = Guid.Parse("2f835d08-34c0-406d-8188-0ce5f33325fc");
+            workOrder.Data = new WorkOrderData
+                             {
+                                 Name = "Couch"
+                             };
+
+            workOrderRepo.Store(workOrder);
+            workOrderRepo.UpdateFromJSON("Data", "{ 'Comment': 'Test Comment' }", UpdateType.Set, workOrder.ID);
+            using (var dbObj = workOrderRepo.Find(workOrder.ID))
+            {
+                Assert.AreEqual(dbObj.Object.Data.Comment, "Test Comment");
+            }
         }
     }
 }
