@@ -100,6 +100,12 @@ namespace Repository.Tests
                 Assert.AreEqual(dbObj.Object.Data.Comments.Count, 1);
             }
 
+            fixtureRepo.UpdateFromJSON("Data", "{ UnitID: 'c7ed2664-58ca-4324-82c1-96fa54140258' }", UpdateType.Set, "c7ed2664-58ca-4324-82c1-96fa54140258");
+            using (var dbObj = fixtureRepo.Find("c7ed2664-58ca-4324-82c1-96fa54140258"))
+            {
+                Assert.AreEqual(dbObj.Object.Data.UnitID, Guid.Parse("c7ed2664-58ca-4324-82c1-96fa54140258"));
+            }
+
             var workOrderRepo = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
             var workOrder = new WorkOrder();
             workOrder.ID = Guid.Parse("2f835d08-34c0-406d-8188-0ce5f33325fc");

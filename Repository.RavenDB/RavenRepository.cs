@@ -282,8 +282,9 @@ namespace Repository.RavenDB
             var patches = obj.Properties().Where(x => currProperty.PropertyType.GetProperty(x.Name) != null)
                                           .Select(x => new PatchRequest 
                                           { 
-                                              Type = patchCommandType, Name = x.Name, 
-                                              Value = currProperty.PropertyType.GetProperty(x.Name).PropertyType.Equals(typeof(String)) ? x.Value.ToString() : RavenJToken.Parse(x.Value.ToString()) 
+                                              Type = patchCommandType, 
+                                              Name = x.Name, 
+                                              Value = RavenJValue.FromObject(x.Value)
                                           }).ToArray();
             currRequest.Nested = patches;
 
