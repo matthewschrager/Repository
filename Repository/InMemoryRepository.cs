@@ -76,6 +76,15 @@ namespace Repository
             }
         }
         //===============================================================
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        /// <filterpriority>2</filterpriority>
+        public void Dispose()
+        {
+            // In-memory repository doesn't need to dispose of anything.
+        }
+        //===============================================================
     }
 
     public class InMemoryObjectContext<T> : IObjectContext<T> where T : class

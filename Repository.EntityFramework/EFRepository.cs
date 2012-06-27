@@ -114,6 +114,15 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        /// <filterpriority>2</filterpriority>
+        public void Dispose()
+        {
+            // EF repository doesn't need to do anything, because it creates contexts for each request.
+        }
+        //===============================================================
     }
 
     public class EFObjectContext<T> : IObjectContext<T> where T : class

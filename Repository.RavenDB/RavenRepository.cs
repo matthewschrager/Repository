@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -167,6 +168,46 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
+        public IEnumerable<T> FindFromJSON(String json)
+        {
+            var queryStr = JSONToLucene(json);
+            var query = new IndexQuery();
+            query.Query = queryStr;
+
+            var indexName = "dynamic/" + typeof(T).Name + "s";
+            using (var session = DocumentStore.OpenSession())
+            {
+                var result = session.Advanced.DatabaseCommands.Query(indexName, query, new string[0]);
+                return result.Results.Select(x => JsonConvert.DeserializeObject<T>(x.ToString()));
+            }
+        }
+        //===============================================================
+        private String JSONToLucene(String json)
+        {
+            var query = "(";
+            var obj = JObject.Parse(json);
+            foreach (var p in obj.Properties())
+                query += p.Name + ": \"" + p.Value + "\" AND ";
+
+            // Remove the trailing AND
+            query = query.Remove(query.LastIndexOf(" AND"));
+
+            // Add the closing parenthesis
+            query += " )";
+
+            return query;
+        }
+        //===============================================================
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        /// <filterpriority>2</filterpriority>
+        public void Dispose()
+        {
+            DocumentStore.Dispose();
+        }
+        //===============================================================
     }
 
     public enum UpdateType
@@ -228,10 +269,84 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
+        private bool IsValidJSON(String json, Type type)
+        {
+            // If the JSON is a "raw" object, surround it with quotes so the deserializer sees it as a string
+            if (!json.Trim().StartsWith("{"))
+                json = "'" + json + "'";
+
+            try
+            {
+                // Nullables don't deserialize correctly for some reason, so we check the underlying type
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && type.GetGenericArguments().Length > 0)
+                    type = type.GetGenericArguments()[0];
+
+                JsonConvert.DeserializeObject(json, type);
+                return true;
+            }
+
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+        //===============================================================
+        public bool IsValidUpdate(String json, UpdateType updateType, Type updateTargetType, ref String error)
+        {
+            var obj = JObject.Parse(json);
+            foreach (var property in obj.Properties())
+            {
+                // JSON properties that don't have any equivalents in the real object are fine, because we'll just ignore them
+                var realProperty = updateTargetType.GetProperty(property.Name);
+                if (realProperty == null)
+                    continue;
+
+                // If this is a SET update, see if the JSON string can be deserialized into the property type
+                if (updateType == UpdateType.Set)
+                {
+                    if (IsValidJSON(property.Value.ToString(), realProperty.PropertyType))
+                        return true;
+
+                    error = "Could not deserialize JSON string into type " + realProperty.PropertyType + ". Received JSON: " + property.Value;
+                    return false;
+                }
+
+                // Otherwise, this is an ADD update. First make sure the real property type is enumerable
+                if (!typeof(IEnumerable).IsAssignableFrom(realProperty.PropertyType))
+                {
+                    error = "The requested update was of type ADD, but the targeted property was not assignable to IEnumerable. ADD updates can only " +
+                            "be applied to properties that derived from IEnumerable (lists, arrays, etc.).";
+                    return false;
+                }
+
+                // Next, make sure that the type of the list can be deserialized from the given JSON. For now, this only works with "simple"
+                // enumerables, list List<T>
+                if (!realProperty.PropertyType.IsGenericType || realProperty.PropertyType.GetGenericArguments().Length > 1)
+                {
+                    error = "The requested update was of type ADD, but the targeted property was not assignable to IEnumerable<T>. ADD updates can only " +
+                            " be applied to properties that derive from IEnumerable<T> for some type T, such as List<T> or Array<T>";
+                    return false;
+                }
+
+                var genericType = realProperty.PropertyType.GetGenericArguments()[0];
+                if (!IsValidJSON(property.Value.ToString(), genericType))
+                {
+                    error = "Could not deserialize JSON string into type " + genericType + ". Received JSON: " + property.Value;
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        //===============================================================
         public void UpdateFromJSON(String json, UpdateType updateType = UpdateType.Set)
         {
             if (Object == null)
                 return;
+
+            var error = "";
+            if (!IsValidUpdate(json, updateType, typeof(T), ref error))
+                throw new ArgumentException(error, "json");
 
             var obj = JObject.Parse(json);
             var patches = obj.Properties().Where(x => Object.GetType().GetProperty(x.Name) != null)
@@ -277,6 +392,10 @@ namespace Repository.RavenDB
                 currRequest = currRequest.Nested[0];
                 currProperty = currProperty.PropertyType.GetProperty(propertyName);
             }
+
+            var error = "";
+            if (!IsValidUpdate(json, updateType, currProperty.PropertyType, ref error))
+                throw new ArgumentException(error, "json");
 
             var obj = JObject.Parse(json);
             var patches = obj.Properties().Where(x => currProperty.PropertyType.GetProperty(x.Name) != null)

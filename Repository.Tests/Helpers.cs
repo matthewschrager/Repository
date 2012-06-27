@@ -27,6 +27,7 @@ namespace Repository.Tests
         public TestProperty Property { get; set; }
         //===============================================================
         public List<TestProperty> List { get; set; }
+        //===============================================================
     }
 
     class TestProperty
