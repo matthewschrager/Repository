@@ -106,6 +106,12 @@ namespace Repository.Tests
 
             // List data
             TestClasses.UpdateFromJSON("{ 'List': 'blah' }", UpdateType.Add, obj.Key);
+            
+            // Incorrect update type
+            TestClasses.UpdateFromJSON("{ 'Value2': 'blah' }", UpdateType.Add, obj.Key);
+
+            // Incorrect data type (list)
+            TestClasses.UpdateFromJSON("{ 'List': 'blah' }", UpdateType.Set, obj.Key);
 
         }
         //===============================================================
@@ -127,6 +133,37 @@ namespace Repository.Tests
 
             result = WorkOrders.FindFromJSON("{ 'ID': '2f835d08-34c0-406d-8188-0ce5f33325f3' }").ToList();
             Assert.AreEqual(result.Count, 0);
+        }
+        //===============================================================
+        [Test]
+        public void UpdateGuidTest()
+        {
+            // First level
+            var testObj = new TestClass();
+            testObj.Guid = Guid.NewGuid();
+            TestClasses.Store(testObj);
+
+            var newGuid = Guid.NewGuid();
+            TestClasses.UpdateFromJSON("{ 'Guid': '" + newGuid + "' }", UpdateType.Set, testObj.Key);
+            using (var dbObj = TestClasses.Find(testObj.Key))
+            {
+                Assert.AreEqual(newGuid, dbObj.Object.Guid);
+            }
+
+            // Second level
+            var fixture = new Fixture();
+            fixture.FixtureID = Guid.Parse("2f835d08-34c0-406d-8188-0ce5f33325fc");
+            fixture.Data = new FixtureData();
+
+            Fixtures.Store(fixture);
+            Fixtures.UpdateFromJSON("Data", "{ UnitID: '" + newGuid + "' }", UpdateType.Set, fixture.FixtureID);
+
+
+            using (var dbFixture = Fixtures.Find(fixture.FixtureID))
+            {
+                Assert.AreEqual(fixture.FixtureID, dbFixture.Object.FixtureID);
+                Assert.AreEqual(newGuid, dbFixture.Object.Data.UnitID);
+            }
         }
         //===============================================================
     }

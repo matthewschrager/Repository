@@ -350,7 +350,7 @@ namespace Repository.RavenDB
 
             var obj = JObject.Parse(json);
             var patches = obj.Properties().Where(x => Object.GetType().GetProperty(x.Name) != null)
-                                          .Select(x => new PatchRequest { Type = ToPatchType(updateType), Name = x.Name, Value = RavenJToken.Parse(x.Value.ToString()) }).ToArray();
+                                          .Select(x => new PatchRequest { Type = ToPatchType(updateType), Name = x.Name, Value = RavenJValue.FromObject(x.Value) }).ToArray();
 
             Session.Advanced.DatabaseCommands.Patch(KeyGenerator(Object), patches);
         }
