@@ -59,16 +59,10 @@ namespace Repository.Tests
             Fixtures.Store(fixture);
             var date = DateTime.Now;
             Fixtures.UpdateFromJSON("Data", "{ 'Comments': { 'Date': '/Date(1224043200000)/', 'Value': 'Test Comment' } }", UpdateType.Add, "c7ed2664-58ca-4324-82c1-96fa54140258");
-            using (var dbObj = Fixtures.Find("c7ed2664-58ca-4324-82c1-96fa54140258"))
+            using (var dbObj = Fixtures.Find(fixture.FixtureID))
             {
                 Assert.AreEqual(dbObj.Object.Data.Comments.Count, 1);
                 Assert.AreEqual(dbObj.Object.Data.Condition, FixtureCondition.New);
-            }
-
-            using (var dbObj = Fixtures.GetItemsContext())
-            {
-                var result = dbObj.Objects.Where(x => x.Data.Condition == FixtureCondition.New).ToList();
-                Assert.AreEqual(result.Count, 1);
             }
 
             Fixtures.UpdateFromJSON("Data", "{ UnitID: 'c7ed2664-58ca-4324-82c1-96fa54140258' }", UpdateType.Set, "c7ed2664-58ca-4324-82c1-96fa54140258");
