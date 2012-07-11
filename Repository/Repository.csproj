@@ -50,6 +50,7 @@
     <Compile Include="IRepository.cs" />
     <Compile Include="IObjectContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UpdateType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -15,7 +15,8 @@ namespace Repository.Tests
             Value1 = 1;
             Value2 = DateTime.MinValue;
             Property = new TestProperty();
-            List = new List<TestProperty>();
+            ComplexList = new List<TestProperty>();
+            IntegerList = new List<int>();
         }
         //===============================================================
         public int Key { get; set; }
@@ -26,7 +27,9 @@ namespace Repository.Tests
         //===============================================================
         public TestProperty Property { get; set; }
         //===============================================================
-        public List<TestProperty> List { get; set; }
+        public List<int> IntegerList { get; set; }
+        //===============================================================
+        public List<TestProperty> ComplexList { get; set; }
         //===============================================================
         public Guid Guid { get; set; }
         //===============================================================

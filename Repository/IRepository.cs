@@ -23,6 +23,10 @@ namespace Repository
         //===============================================================
         void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys);
         //===============================================================
+        void Update(String json, UpdateType updateType, params Object[] keys);
+        //===============================================================
+        void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys);
+        //===============================================================
         IObjectContext<T> Find(params Object[] keys);
         //===============================================================
         IEnumerableObjectContext<T> GetItemsContext();

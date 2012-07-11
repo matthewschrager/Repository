@@ -2,12 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Raven.Abstractions.Commands;
 using Raven.Abstractions.Data;
 using Raven.Client;
 using Raven.Client.Document;
+using Raven.Imports.Newtonsoft.Json;
+using Raven.Imports.Newtonsoft.Json.Linq;
 using Raven.Json.Linq;
 
 namespace Repository.RavenDB
@@ -20,7 +20,7 @@ namespace Repository.RavenDB
             DocumentStore = documentStore;
             KeySelector = keySelector;
 
-            DocumentStore.Conventions.DocumentKeyGenerator = e => KeyGenerator(KeySelector(e as T));
+            DocumentStore.Conventions.DocumentKeyGenerator = (e, o) => KeyGenerator(KeySelector(o as T));
             DocumentStore.Initialize();
         }
         //===============================================================
@@ -152,34 +152,51 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void UpdateFromJSON(String json, UpdateType updateType, params Object[] keys)
+        public void Update(String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
-                obj.UpdateFromJSON(json, updateType);
+                obj.Update(json, updateType);
             }
         }
         //===============================================================
-        public void UpdateFromJSON(String pathToProperty, String json, UpdateType updateType, params Object[] keys)
+        public void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
-                obj.UpdateFromJSON(pathToProperty, json, updateType);
+                obj.Update(pathToProperty, json, updateType);
             }
         }
         //===============================================================
         public IEnumerable<T> FindFromJSON(String json)
         {
-            var queryStr = JSONToLucene(json);
-            var query = new IndexQuery();
-            query.Query = queryStr;
-
-            var indexName = "dynamic/" + typeof(T).Name + "s";
             using (var session = DocumentStore.OpenSession())
             {
-                var result = session.Advanced.DatabaseCommands.Query(indexName, query, new string[0]);
-                return result.Results.Select(x => JsonConvert.DeserializeObject<T>(x.ToString()));
+                return RunLuceneQuery(json, session);
             }
+//            var queryStr = JSONToLucene(json);
+//            var query = new IndexQuery();
+//            query.Query = queryStr;
+//
+//            var indexName = "dynamic/" + typeof(T).Name + "s";
+//            using (var session = DocumentStore.OpenSession())
+//            {
+//                session.Advanced.LuceneQuery<T>(indexName).
+//                var result = session.Advanced.DatabaseCommands.Query(indexName, query, new string[0]);
+//                return result.Results.Select(x => JsonConvert.DeserializeObject<T>(x.ToString()));
+//            }
+        }
+        //===============================================================
+        private IEnumerable<T> RunLuceneQuery(String json, IDocumentSession session)
+        {
+            var obj = JObject.Parse(json);
+            var indexName = "dynamic/" + typeof(T).Name + "s";
+            var query = session.Advanced.LuceneQuery<T>(indexName);
+
+            foreach (var p in obj.Properties())
+                query = query.WhereEquals(p.Name, p.Value);
+
+            return query;
         }
         //===============================================================
         private String JSONToLucene(String json)
@@ -208,12 +225,6 @@ namespace Repository.RavenDB
             DocumentStore.Dispose();
         }
         //===============================================================
-    }
-
-    public enum UpdateType
-    {
-        Add,
-        Set,
     }
 
     public class RavenObjectContext<T> : IObjectContext<T> where T : class
@@ -272,7 +283,7 @@ namespace Repository.RavenDB
         private bool IsValidJSON(String json, Type type)
         {
             // If the JSON is a "raw" object, surround it with quotes so the deserializer sees it as a string
-            if (!json.Trim().StartsWith("{"))
+            if (!json.Trim().StartsWith("{") && !json.Trim().StartsWith("["))
                 json = "'" + json + "'";
 
             try
@@ -314,7 +325,7 @@ namespace Repository.RavenDB
                 // Otherwise, this is an ADD update. First make sure the real property type is enumerable
                 if (!typeof(IEnumerable).IsAssignableFrom(realProperty.PropertyType))
                 {
-                    error = "The requested update was of type ADD, but the targeted property was not assignable to IEnumerable. ADD updates can only " +
+                    error = "The requested update was of type ADD, but the targeted property '" + realProperty.Name + "' was not assignable to IEnumerable. ADD updates can only " +
                             "be applied to properties that derived from IEnumerable (lists, arrays, etc.).";
                     return false;
                 }
@@ -323,7 +334,7 @@ namespace Repository.RavenDB
                 // enumerables, list List<T>
                 if (!realProperty.PropertyType.IsGenericType || realProperty.PropertyType.GetGenericArguments().Length > 1)
                 {
-                    error = "The requested update was of type ADD, but the targeted property was not assignable to IEnumerable<T>. ADD updates can only " +
+                    error = "The requested update was of type ADD, but the targeted property '" + realProperty.Name + "' was not assignable to IEnumerable<T>. ADD updates can only " +
                             " be applied to properties that derive from IEnumerable<T> for some type T, such as List<T> or Array<T>";
                     return false;
                 }
@@ -339,7 +350,7 @@ namespace Repository.RavenDB
             return true;
         }
         //===============================================================
-        public void UpdateFromJSON(String json, UpdateType updateType = UpdateType.Set)
+        public void Update(String json, UpdateType updateType = UpdateType.Set)
         {
             if (Object == null)
                 return;
@@ -352,17 +363,18 @@ namespace Repository.RavenDB
             var patches = obj.Properties().Where(x => Object.GetType().GetProperty(x.Name) != null)
                                           .Select(x => new PatchRequest { Type = ToPatchType(updateType), Name = x.Name, Value = RavenJValue.FromObject(x.Value) }).ToArray();
 
-            Session.Advanced.DatabaseCommands.Patch(KeyGenerator(Object), patches);
+            Session.Advanced.Defer(new PatchCommandData { Key = KeyGenerator(Object), Patches = patches });
+            Session.SaveChanges();
         }
         //===============================================================    
-        public void UpdateFromJSON(String pathToProperty, String json, UpdateType updateType = UpdateType.Set)
+        public void Update(String pathToProperty, String json, UpdateType updateType = UpdateType.Set)
         {
             if (Object == null)
                 return;
 
             if (String.IsNullOrEmpty(pathToProperty))
             {
-                UpdateFromJSON(json);
+                Update(json, updateType);
                 return;
             }
 
@@ -407,7 +419,8 @@ namespace Repository.RavenDB
                                           }).ToArray();
             currRequest.Nested = patches;
 
-            Session.Advanced.DatabaseCommands.Patch(KeyGenerator(Object), new[] { baseRequest });
+            Session.Advanced.Defer(new PatchCommandData { Key = KeyGenerator(Object), Patches = new[] { baseRequest } });
+            Session.SaveChanges();
         }
         //===============================================================
     }

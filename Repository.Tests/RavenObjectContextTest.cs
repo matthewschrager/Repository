@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using Newtonsoft.Json;
 using Repository.RavenDB;
 using System;
 using Raven.Client;
@@ -22,6 +23,13 @@ namespace Repository.Tests
             TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
             Fixtures = RavenRepository<Fixture>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.FixtureID);
             WorkOrders = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
+
+            foreach (var obj in TestClasses.GetItemsContext().Objects)
+                TestClasses.Remove(obj.Key);
+            foreach (var obj in Fixtures.GetItemsContext().Objects)
+                Fixtures.Remove(obj.FixtureID);
+            foreach (var obj in WorkOrders.GetItemsContext().Objects)
+                WorkOrders.Remove(obj.ID);
         }
         //===============================================================
         [TearDown]
@@ -35,22 +43,27 @@ namespace Repository.Tests
         [Test]
         public void UpdateFromJSONTest()
         {
+            // TestClass
             var obj = new TestClass();
             TestClasses.Store(obj);
 
-            TestClasses.UpdateFromJSON("Property", "{ Value1: 2 }", UpdateType.Set, 1);
+            TestClasses.Update("Property", "{ Value1: 2 }", UpdateType.Set, 1);
             using (var dbObj = TestClasses.Find(1))
             {
                 Assert.AreEqual(dbObj.Object.Property.Value1, 2);
             }
 
-            TestClasses.UpdateFromJSON("{ List: { Value1: 2 } }", UpdateType.Add, 1);
+            TestClasses.Update("{ ComplexList: { Value1: 2 } }", UpdateType.Add, 1);
             using (var dbObj = TestClasses.Find(1))
             {
-                Assert.AreEqual(dbObj.Object.List.Count, 1);
-                Assert.AreEqual(dbObj.Object.List.First().Value1, 2);
+                Assert.AreEqual(dbObj.Object.ComplexList.Count, 1);
+                Assert.AreEqual(dbObj.Object.ComplexList.First().Value1, 2);
             }
 
+            TestClasses.Remove(obj.Key);
+
+
+            // Fixture
             var fixture = new Fixture();
             fixture.FixtureID = Guid.Parse("c7ed2664-58ca-4324-82c1-96fa54140258");
             fixture.Data = new FixtureData();
@@ -58,19 +71,22 @@ namespace Repository.Tests
 
             Fixtures.Store(fixture);
             var date = DateTime.Now;
-            Fixtures.UpdateFromJSON("Data", "{ 'Comments': { 'Date': '/Date(1224043200000)/', 'Value': 'Test Comment' } }", UpdateType.Add, "c7ed2664-58ca-4324-82c1-96fa54140258");
+            Fixtures.Update("Data", "{ 'Comments': { 'Date': '/Date(1224043200000)/', 'Value': 'Test Comment' } }", UpdateType.Add, "c7ed2664-58ca-4324-82c1-96fa54140258");
             using (var dbObj = Fixtures.Find(fixture.FixtureID))
             {
                 Assert.AreEqual(dbObj.Object.Data.Comments.Count, 1);
                 Assert.AreEqual(dbObj.Object.Data.Condition, FixtureCondition.New);
             }
 
-            Fixtures.UpdateFromJSON("Data", "{ UnitID: 'c7ed2664-58ca-4324-82c1-96fa54140258' }", UpdateType.Set, "c7ed2664-58ca-4324-82c1-96fa54140258");
+            Fixtures.Update("Data", "{ UnitID: 'c7ed2664-58ca-4324-82c1-96fa54140258' }", UpdateType.Set, "c7ed2664-58ca-4324-82c1-96fa54140258");
             using (var dbObj = Fixtures.Find("c7ed2664-58ca-4324-82c1-96fa54140258"))
             {
                 Assert.AreEqual(dbObj.Object.Data.UnitID, Guid.Parse("c7ed2664-58ca-4324-82c1-96fa54140258"));
             }
 
+            Fixtures.Remove(fixture.FixtureID);
+
+            // Work orders
             var workOrder = new WorkOrder();
             workOrder.ID = Guid.Parse("2f835d08-34c0-406d-8188-0ce5f33325fc");
             workOrder.Data = new WorkOrderData
@@ -79,33 +95,37 @@ namespace Repository.Tests
                              };
 
             WorkOrders.Store(workOrder);
-            WorkOrders.UpdateFromJSON("Data", "{ 'Comment': 'Test Comment' }", UpdateType.Set, workOrder.ID);
+            WorkOrders.Update("Data", "{ 'Comment': 'Test Comment' }", UpdateType.Set, workOrder.ID);
             using (var dbObj = WorkOrders.Find(workOrder.ID))
             {
                 Assert.AreEqual(dbObj.Object.Data.Comment, "Test Comment");
             }
+
+            WorkOrders.Remove(workOrder.ID);
         }
         //===============================================================
-        [Test, ExpectedException(ExpectedException = typeof(ArgumentException))]
+        [Test]
         public void InvalidUpdateTest()
         {
             var obj = new TestClass();
             TestClasses.Store(obj);
 
             // First-level data
-            TestClasses.UpdateFromJSON("{'Value2': 'blah'}", UpdateType.Set, obj.Key);
+            Assert.That(() => TestClasses.Update("{'Value2': 'blah'}", UpdateType.Set, obj.Key), Throws.Exception);
 
             // Second-level data
-            TestClasses.UpdateFromJSON("TestProperty", "{ 'Value2': 'blah' }", UpdateType.Set, obj.Key);
+            Assert.That(() => TestClasses.Update("TestProperty", "{ 'Value2': 'blah' }", UpdateType.Set, obj.Key), Throws.Exception);
 
             // List data
-            TestClasses.UpdateFromJSON("{ 'List': 'blah' }", UpdateType.Add, obj.Key);
+            Assert.That(() => TestClasses.Update("{ 'ComplexList': 'blah' }", UpdateType.Add, obj.Key), Throws.Exception);
             
             // Incorrect update type
-            TestClasses.UpdateFromJSON("{ 'Value2': 'blah' }", UpdateType.Add, obj.Key);
+            Assert.That(() => TestClasses.Update("{ 'Value2': 'blah' }", UpdateType.Add, obj.Key), Throws.Exception);
 
             // Incorrect data type (list)
-            TestClasses.UpdateFromJSON("{ 'List': 'blah' }", UpdateType.Set, obj.Key);
+            Assert.That(() => TestClasses.Update("{ 'ComplexList': 'blah' }", UpdateType.Set, obj.Key), Throws.Exception);
+
+            TestClasses.Remove(obj.Key);
 
         }
         //===============================================================
@@ -127,6 +147,8 @@ namespace Repository.Tests
 
             result = WorkOrders.FindFromJSON("{ 'ID': '2f835d08-34c0-406d-8188-0ce5f33325f3' }").ToList();
             Assert.AreEqual(result.Count, 0);
+
+            WorkOrders.Remove(workOrder.ID);
         }
         //===============================================================
         [Test]
@@ -138,11 +160,13 @@ namespace Repository.Tests
             TestClasses.Store(testObj);
 
             var newGuid = Guid.NewGuid();
-            TestClasses.UpdateFromJSON("{ 'Guid': '" + newGuid + "' }", UpdateType.Set, testObj.Key);
+            TestClasses.Update("{ 'Guid': '" + newGuid + "' }", UpdateType.Set, testObj.Key);
             using (var dbObj = TestClasses.Find(testObj.Key))
             {
                 Assert.AreEqual(newGuid, dbObj.Object.Guid);
             }
+
+            TestClasses.Remove(testObj.Key);
 
             // Second level
             var fixture = new Fixture();
@@ -150,7 +174,7 @@ namespace Repository.Tests
             fixture.Data = new FixtureData();
 
             Fixtures.Store(fixture);
-            Fixtures.UpdateFromJSON("Data", "{ UnitID: '" + newGuid + "' }", UpdateType.Set, fixture.FixtureID);
+            Fixtures.Update("Data", "{ UnitID: '" + newGuid + "' }", UpdateType.Set, fixture.FixtureID);
 
 
             using (var dbFixture = Fixtures.Find(fixture.FixtureID))
@@ -158,6 +182,26 @@ namespace Repository.Tests
                 Assert.AreEqual(fixture.FixtureID, dbFixture.Object.FixtureID);
                 Assert.AreEqual(newGuid, dbFixture.Object.Data.UnitID);
             }
+
+            Fixtures.Remove(fixture.FixtureID);
+        }
+        //===============================================================
+        [Test]
+        public void UpdateListTest()
+        {
+            var obj = new TestClass();
+            TestClasses.Store(obj);
+
+            var list = new[] { 2 };
+            TestClasses.Update("{ 'IntegerList': " + JsonConvert.SerializeObject(list) + " }", UpdateType.Set, obj.Key);
+            using (var dbObj = TestClasses.Find(obj.Key))
+            {
+                Assert.NotNull(dbObj.Object);
+                Assert.AreEqual(list.Count(), dbObj.Object.IntegerList.Count);
+                Assert.IsTrue(list.SequenceEqual(dbObj.Object.IntegerList));
+            }
+
+            TestClasses.Remove(obj.Key);
         }
         //===============================================================
     }

@@ -76,6 +76,16 @@ namespace Repository
             }
         }
         //===============================================================
+        public void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
+        {
+            throw new NotImplementedException();
+        }
+        //===============================================================
+        public void Update(string json, UpdateType updateType, params object[] keys)
+        {
+            throw new NotImplementedException();
+        }
+        //===============================================================
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
