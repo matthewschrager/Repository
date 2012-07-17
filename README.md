@@ -13,7 +13,7 @@ Store an object:
 
 ```C#
 var repository = new MyConcreteRepository<int>();
-repository.Store(int); // Store a single value
+repository.Store(1); // Store a single value
 repository.Store(new[] { 1, 2, 3, 4, 5 }); // Store a bunch of values
 ```
 
