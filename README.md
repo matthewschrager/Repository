@@ -2,7 +2,8 @@ Repository
 =============
 
 Repository is a generic implementation of the Repository pattern in C#. It provides a repository interface ```IRepository<T>``` that exposes functions to store/retrieve data,
-and an object context interface ```IObjectContext<T>``` that allows you to manipulate data once you've retrieved it.
+and an object context interface ```IObjectContext<T>``` that allows you to manipulate data once you've retrieved it. It also exposes a ```GetItemsContext``` method that returns
+an ```IQueryable<T>``` which can be used to perform queries on the repository.
 
 Examples
 ===========
@@ -37,6 +38,29 @@ using (var valueContext = repository.Find("myKey"))
 	// Do cool things with this value
 }
 ```
+
+Query stored objects:
+----------------------
+
+```C#
+class MyClass
+{
+	public String Key { get; set; }
+	public int Value { get; set; }
+}
+
+/* ... */
+
+var repository = new MyConcreteRepository<MyClass>();
+using (var itemsContext = repository.GetItemsContext())
+{
+	// Query objects based on their Value field
+	var filteredItems = itemsContext.Where(x => x.Value > 5);
+
+	// Do stuff with query result
+}
+```
+
 
 Remove an object:
 -----------------
