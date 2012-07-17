@@ -1,7 +1,8 @@
 Repository
 =============
 
-Repository is a generic implementation of the Repository pattern in C#. It provides an interface ```IRepository<T>``` that exposes functions used to interact with stored data.
+Repository is a generic implementation of the Repository pattern in C#. It provides a repository interface ```IRepository<T>``` that exposes functions to store/retrieve data,
+and an object context interface ```IObjectContext<T>``` that allows you to manipulate data once you've retrieved it.
 
 Examples
 ===========
