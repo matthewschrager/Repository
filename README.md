@@ -68,7 +68,6 @@ class MyClass
 var repository = new MyConcreteRepository<MyClass>();
 using (var valueContext = repository.Find("myKey"))
 {
-
 	// Modify it
 	valueContext.Object.Value = 5;
 

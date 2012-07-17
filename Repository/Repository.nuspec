@@ -8,8 +8,9 @@
     <owners>$author$</owners>
     <licenseUrl>http://pastebin.com/Aaxx2AMM</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
+	<projectUrl>https://github.com/matthewschrager/Repository</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Added Update function.</releaseNotes>
+    <releaseNotes>Added basic documentation.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository</tags>
   </metadata>
