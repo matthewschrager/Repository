@@ -64,7 +64,7 @@ var repository = new MyConcreteRepository<MyClass>();
 using (var itemsContext = repository.GetItemsContext())
 {
 	// Query objects based on their Value field
-	var filteredItems = itemsContext.Where(x => x.Value > 5);
+	var filteredItems = itemsContext.Objects.Where(x => x.Value > 5);
 
 	// Do stuff with query result
 }
