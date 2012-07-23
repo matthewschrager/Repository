@@ -10,9 +10,9 @@ Implementations
 
 This (code) repository comes with a few Repository implementations. The first and simplest is ```InMemoryRepository```, which acts as a temporary in-memory store useful mainly for testing. The second is
 an Entity Framework repository named ```EFRepository```, which uses [Entity Framework](http://msdn.microsoft.com/en-us/data/ef.aspx) as its storage interface. The last (and most extensively developed) is ```RavenRepository```, 
-a [RavenDB](http://ravendb.net/) implementation of ```IRepository```.
+a [RavenDB](http://ravendb.net/) implementation.
 
-Pull requests for additional implementations are welcome and encouraged.
+Pull requests for additional implementations (and improvements to existing ones) are welcome and encouraged.
 
 Examples
 ===========
