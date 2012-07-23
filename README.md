@@ -5,6 +5,15 @@ Repository is a generic implementation of the Repository pattern in C#. It provi
 and an object context interface ```IObjectContext<T>``` that enables manipulation of data once it's retrieved. It also exposes a ```GetItemsContext``` method that returns
 an ```IQueryable<T>``` which can be used to perform LINQ queries on the repository.
 
+Implementations
+================
+
+This (code) repository comes with a few Repository implementations. The first and simplest is ```InMemoryRepository```, which acts as a temporary in-memory store useful mainly for testing. The second is
+an Entity Framework repository named ```EFRepository```, which uses [Entity Framework](http://msdn.microsoft.com/en-us/data/ef.aspx) as its storage interface. The last (and most extensively developed) is ```RavenRepository```, 
+a [RavenDB](http://ravendb.net/) implementation of ```IRepository```.
+
+Pull requests for additional implementations are welcome and encouraged.
+
 Examples
 ===========
 
