@@ -113,6 +113,8 @@ using (var valueContext = repository.Find("myKey"))
 License
 ===========
 
+Repository is licensed under the New BSD License:
+
 ```
 Copyright (c) 2012, Matthew Schrager
 All rights reserved.
