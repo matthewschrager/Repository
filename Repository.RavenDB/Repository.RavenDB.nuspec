@@ -6,7 +6,7 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>http://pastebin.com/Aaxx2AMM</licenseUrl>
+    <licenseUrl>https://github.com/matthewschrager/Repository#license</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>Added support for Update.</releaseNotes>
