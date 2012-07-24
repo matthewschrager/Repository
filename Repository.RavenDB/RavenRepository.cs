@@ -71,6 +71,8 @@ namespace Repository.RavenDB
         {
             try
             {
+                // RavenDB is supposed to automatically overwrite existing values, but due to some ETag wierdness this wasn't happening and was causing exceptions.
+                // We manually check existence here. This may be slow; look for better alternatives in the future
                 if (Exists(KeySelector(value)))
                     Update(value, KeySelector(value));
 
