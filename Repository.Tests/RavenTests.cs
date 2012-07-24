@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using NUnit.Framework;
 using Newtonsoft.Json;
 using Repository.RavenDB;
@@ -10,7 +11,7 @@ namespace Repository.Tests
 {
    
     [TestFixture]
-    public class RavenObjectContextTest
+    public class RavenTests
     {
         private RavenRepository<TestClass> TestClasses;
         private RavenRepository<Fixture> Fixtures;
@@ -20,24 +21,24 @@ namespace Repository.Tests
         [SetUp]
         public void SetUp()
         {
-            TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
-            Fixtures = RavenRepository<Fixture>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.FixtureID);
-            WorkOrders = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
-
-            foreach (var obj in TestClasses.GetItemsContext().Objects)
-                TestClasses.Remove(obj.Key);
-            foreach (var obj in Fixtures.GetItemsContext().Objects)
-                Fixtures.Remove(obj.FixtureID);
-            foreach (var obj in WorkOrders.GetItemsContext().Objects)
-                WorkOrders.Remove(obj.ID);
+//            TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
+//            Fixtures = RavenRepository<Fixture>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.FixtureID);
+//            WorkOrders = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
+//
+//            foreach (var obj in TestClasses.GetItemsContext().Objects)
+//                TestClasses.Remove(obj.Key);
+//            foreach (var obj in Fixtures.GetItemsContext().Objects)
+//                Fixtures.Remove(obj.FixtureID);
+//            foreach (var obj in WorkOrders.GetItemsContext().Objects)
+//                WorkOrders.Remove(obj.ID);
         }
         //===============================================================
         [TearDown]
         public void TearDown()
         {
-            TestClasses.Dispose();
-            Fixtures.Dispose();
-            WorkOrders.Dispose();
+//            TestClasses.Dispose();
+//            Fixtures.Dispose();
+//            WorkOrders.Dispose();
         }
         //===============================================================
         [Test]
@@ -204,5 +205,22 @@ namespace Repository.Tests
             TestClasses.Remove(obj.Key);
         }
         //===============================================================
+        [Test]
+        public void SaveObjectTwice()
+        {
+            using (var repo1 = TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key))
+            {
+                var obj = new TestClass();
+                repo1.Store(obj);
+            }
+
+            Thread.Sleep(5000);
+
+            using (var repo2 = TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key))
+            {
+                var obj = new TestClass();
+                repo2.Store(obj);
+            }
+        }
     }
 }
