@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -8,27 +9,19 @@ namespace Repository
 {
     public class InMemoryRepository<T> : IRepository<T> where T : class
     {
-        private List<Tuple<List<Object>, T>> mData = new List<Tuple<List<object>, T>>();
+        private ConcurrentDictionary<String, T> mData = new ConcurrentDictionary<string, T>();
 
         //===============================================================
-        public InMemoryRepository(Func<T, IEnumerable<Object>> keySelector)
+        public InMemoryRepository(Func<T, Object> keySelector)
         {
             KeySelector = keySelector;
         }
         //===============================================================
-        public InMemoryRepository(Func<T, Object> keySelector)
-        {
-            KeySelector = x => new[] { keySelector(x) };
-        }
-        //===============================================================
-        private Func<T, IEnumerable<Object>> KeySelector { get; set; }
+        private Func<T, Object> KeySelector { get; set; }
         //===============================================================
         public void Store(T value)
         {
-            if (mData.Exists(x => x.Item1.SequenceEqual(KeySelector(value))))
-                return;
-
-            mData.Add(Tuple.Create(KeySelector(value).ToList(), value));
+            mData[KeySelector(value).ToString()] = value;
         }
         //===============================================================
         public void Store(IEnumerable<T> values)
@@ -39,23 +32,34 @@ namespace Repository
         //===============================================================
         public void Remove(params Object[] keys)
         {
-            mData.RemoveAll(x => x.Item1.SequenceEqual(keys));
+            if (keys.Length > 1)
+                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
+            
+            T removedObj = null;
+            mData.TryRemove(keys.First().ToString(), out removedObj);
         }
         //===============================================================
         public bool Exists(params Object[] keys)
         {
-            return mData.Exists(x => x.Item1.SequenceEqual(keys));
+            if (keys.Length > 1)
+                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
+
+            return mData.ContainsKey(keys.First().ToString());
         }
         //===============================================================
         public IObjectContext<T> Find(params Object[] keys)
         {
-            var obj = mData.SingleOrDefault(x => x.Item1.SequenceEqual(keys));
-            return new InMemoryObjectContext<T>(obj != null ? obj.Item2 : (T)null);
+            if (keys.Length > 1)
+                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
+
+            T obj = null;
+            mData.TryGetValue(keys.First().ToString(), out obj);
+            return new InMemoryObjectContext<T>(obj);
         }
         //===============================================================
         public IEnumerableObjectContext<T> GetItemsContext()
         {
-            return new InMemoryEnumerableObjectContext<T>(mData.Select(x => x.Item2).AsQueryable());
+            return new InMemoryEnumerableObjectContext<T>(mData.Values.AsQueryable());
         }
         //===============================================================
         public void Update<TValue>(TValue value, params Object[] keys)
