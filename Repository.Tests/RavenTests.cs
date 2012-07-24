@@ -21,24 +21,57 @@ namespace Repository.Tests
         [SetUp]
         public void SetUp()
         {
-//            TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
-//            Fixtures = RavenRepository<Fixture>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.FixtureID);
-//            WorkOrders = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
-//
-//            foreach (var obj in TestClasses.GetItemsContext().Objects)
-//                TestClasses.Remove(obj.Key);
-//            foreach (var obj in Fixtures.GetItemsContext().Objects)
-//                Fixtures.Remove(obj.FixtureID);
-//            foreach (var obj in WorkOrders.GetItemsContext().Objects)
-//                WorkOrders.Remove(obj.ID);
+            TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
+            Fixtures = RavenRepository<Fixture>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.FixtureID);
+            WorkOrders = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
+
+            foreach (var obj in TestClasses.GetItemsContext().Objects)
+                TestClasses.Remove(obj.Key);
+            foreach (var obj in Fixtures.GetItemsContext().Objects)
+                Fixtures.Remove(obj.FixtureID);
+            foreach (var obj in WorkOrders.GetItemsContext().Objects)
+                WorkOrders.Remove(obj.ID);
         }
         //===============================================================
         [TearDown]
         public void TearDown()
         {
-//            TestClasses.Dispose();
-//            Fixtures.Dispose();
-//            WorkOrders.Dispose();
+            TestClasses.Dispose();
+            Fixtures.Dispose();
+            WorkOrders.Dispose();
+        }
+        //===============================================================
+        [Test]
+        public void UpdateTest()
+        {
+            var obj = new TestClass();
+            var guid = Guid.NewGuid();
+            TestClasses.Store(obj);
+
+            using (var dbObj = TestClasses.Find(obj.Key))
+            {
+                Assert.NotNull(dbObj.Object);
+
+                dbObj.Object.Guid = guid;
+                dbObj.SaveChanges();
+            }
+
+            using (var dbObj = TestClasses.Find(obj.Key))
+            {
+                Assert.NotNull(dbObj.Object);
+                Assert.AreEqual(guid, dbObj.Object.Guid);
+            }
+
+            guid = Guid.NewGuid();
+            obj.Guid = guid;
+
+            TestClasses.Update(obj, obj.Key);
+            
+            using (var dbObj = TestClasses.Find(obj.Key))
+            {
+                Assert.NotNull(dbObj.Object);
+                Assert.AreEqual(guid, dbObj.Object.Guid);
+            }
         }
         //===============================================================
         [Test]
@@ -214,13 +247,23 @@ namespace Repository.Tests
                 repo1.Store(obj);
             }
 
-            Thread.Sleep(5000);
+            Thread.Sleep(500);
 
             using (var repo2 = TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key))
             {
                 var obj = new TestClass();
+                obj.Guid = Guid.NewGuid();
+
                 repo2.Store(obj);
+                using (var dbObj = repo2.Find(obj.Key))
+                {
+                    Assert.NotNull(dbObj.Object);
+                    Assert.AreEqual(obj.Guid, dbObj.Object.Guid);
+                }
+
+                repo2.Remove(obj);
             }
         }
+        //===============================================================
     }
 }

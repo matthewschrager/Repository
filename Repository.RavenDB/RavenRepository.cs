@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Raven.Abstractions.Commands;
 using Raven.Abstractions.Data;
+using Raven.Abstractions.Exceptions;
 using Raven.Client;
 using Raven.Client.Document;
 using Raven.Imports.Newtonsoft.Json;
@@ -70,10 +71,16 @@ namespace Repository.RavenDB
         {
             try
             {
-                using (var session = DocumentStore.OpenSession())
+                if (Exists(KeySelector(value)))
+                    Update(value, KeySelector(value));
+
+                else
                 {
-                    session.Store(value);
-                    session.SaveChanges();
+                    using (var session = DocumentStore.OpenSession())
+                    {
+                        session.Store(value);
+                        session.SaveChanges();
+                    }
                 }
             }
 
@@ -259,7 +266,7 @@ namespace Repository.RavenDB
         //===============================================================
         public void Update<TValue>(TValue value)
         {
-            Object = AutoMapper.Mapper.DynamicMap<T>(value);
+            AutoMapper.Mapper.DynamicMap(value, Object);
         }
         //===============================================================
         public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
