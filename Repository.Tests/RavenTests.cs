@@ -241,29 +241,50 @@ namespace Repository.Tests
         [Test]
         public void SaveObjectTwice()
         {
-            using (var repo1 = TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key))
-            {
-                var obj = new TestClass();
-                repo1.Store(obj);
-            }
+            var obj = new TestClass();
+            TestClasses.Store(obj);
 
             Thread.Sleep(500);
 
-            using (var repo2 = TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key))
+            obj = new TestClass();
+            obj.Guid = Guid.NewGuid();
+
+            TestClasses.Store(obj);
+            using (var dbObj = TestClasses.Find(obj.Key))
             {
-                var obj = new TestClass();
-                obj.Guid = Guid.NewGuid();
-
-                repo2.Store(obj);
-                using (var dbObj = repo2.Find(obj.Key))
-                {
-                    Assert.NotNull(dbObj.Object);
-                    Assert.AreEqual(obj.Guid, dbObj.Object.Guid);
-                }
-
-                repo2.Remove(obj);
+                Assert.NotNull(dbObj.Object);
+                Assert.AreEqual(obj.Guid, dbObj.Object.Guid);
             }
+
+            TestClasses.Remove(obj);
         }
         //===============================================================
+        [Test]
+        public void SaveObjectsTwice()
+        {
+            var obj1 = new TestClass { Key = 1 };
+            var obj2 = new TestClass { Key = 2 };
+
+            TestClasses.Store(new[] { obj1, obj2 });
+
+            Thread.Sleep(500);
+
+            obj1 = new TestClass { Key = 1, Guid = Guid.NewGuid() };
+            obj2 = new TestClass { Key = 2, Guid = Guid.NewGuid() };
+
+            TestClasses.Store(new[] { obj1, obj2 });
+            using (var dbObj = TestClasses.Find(obj1.Key))
+            {
+                Assert.NotNull(dbObj.Object);
+                Assert.AreEqual(obj1.Guid, dbObj.Object.Guid);
+            }
+
+            using (var dbObj = TestClasses.Find(obj2.Key))
+            {
+                Assert.NotNull(dbObj.Object);
+                Assert.AreEqual(obj2.Guid, dbObj.Object.Guid);
+            }
+
+        }
     }
 }

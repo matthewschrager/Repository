@@ -18,11 +18,13 @@ namespace Repository.RavenDB
         //===============================================================
         private RavenRepository(DocumentStore documentStore, Func<T, Object[]> keySelector)
         {
+            TimeoutInMilliseconds = 5000;
             DocumentStore = documentStore;
             KeySelector = keySelector;
 
             DocumentStore.Conventions.DocumentKeyGenerator = (e, o) => KeyGenerator(KeySelector(o as T));
             DocumentStore.Initialize();
+            DocumentStore.JsonRequestFactory.ConfigureRequest += (s, e) => e.Request.Timeout = TimeoutInMilliseconds;
         }
         //===============================================================
         public static RavenRepository<T> FromUrlAndApiKey(String url, String apiKey, Func<T, Object[]> keySelector)
@@ -63,6 +65,8 @@ namespace Repository.RavenDB
             return key;
         }
         //===============================================================
+        public int TimeoutInMilliseconds { get; set; }
+        //===============================================================
         private DocumentStore DocumentStore { get; set; }
         //===============================================================
         private Func<T, Object[]> KeySelector { get; set; }
@@ -71,18 +75,21 @@ namespace Repository.RavenDB
         {
             try
             {
-                // RavenDB is supposed to automatically overwrite existing values, but due to some ETag wierdness this wasn't happening and was causing exceptions.
-                // We manually check existence here. This may be slow; look for better alternatives in the future
-                if (Exists(KeySelector(value)))
-                    Update(value, KeySelector(value));
-
-                else
+                using (var session = DocumentStore.OpenSession())
                 {
-                    using (var session = DocumentStore.OpenSession())
+                    Guid? etag = null;
+                    using (var existingObj = Find(KeySelector(value)) as RavenObjectContext<T>)
                     {
-                        session.Store(value);
-                        session.SaveChanges();
+                        if (existingObj.Object != null)
+                            etag = existingObj.Session.Advanced.GetEtagFor(existingObj.Object);
                     }
+
+                    if (etag != null)
+                        session.Store(value, etag.Value);
+                    else
+                        session.Store(value);
+
+                    session.SaveChanges();
                 }
             }
 
@@ -99,7 +106,20 @@ namespace Repository.RavenDB
                 using (var session = DocumentStore.OpenSession())
                 {
                     foreach (var x in values)
-                        session.Store(x);
+                    {
+                        Guid? etag = null;
+                        using (var existingObj = Find(KeySelector(x)) as RavenObjectContext<T>)
+                        {
+                            if (existingObj.Object != null)
+                                etag = existingObj.Session.Advanced.GetEtagFor(existingObj.Object);
+                        }
+
+
+                        if (etag != null)
+                            session.Store(x, etag.Value);
+                        else
+                            session.Store(x);
+                    }
 
                     session.SaveChanges();
                 }
@@ -248,7 +268,7 @@ namespace Repository.RavenDB
         //===============================================================
         private Func<T, String> KeyGenerator { get; set; }
         //===============================================================
-        private IDocumentSession Session { get; set; }
+        public IDocumentSession Session { get; private set; }
         //===============================================================
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.

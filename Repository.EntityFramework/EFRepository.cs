@@ -155,7 +155,7 @@ namespace Repository.EntityFramework
         //===============================================================
         public void Update<TValue>(TValue value)
         {
-            Object = AutoMapper.Mapper.DynamicMap<T>(value);
+            AutoMapper.Mapper.DynamicMap(value, Object);
         }
         //===============================================================
         public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
