@@ -16,14 +16,16 @@ namespace Repository.Tests
         private RavenRepository<TestClass> TestClasses;
         private RavenRepository<Fixture> Fixtures;
         private RavenRepository<WorkOrder> WorkOrders;
+        private RavenRepository<StringKeyClass> StringKeys;
 
-        //===============================================================
+            //===============================================================
         [SetUp]
         public void SetUp()
         {
             TestClasses = RavenRepository<TestClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
             Fixtures = RavenRepository<Fixture>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.FixtureID);
             WorkOrders = RavenRepository<WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
+            StringKeys = RavenRepository<StringKeyClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
 
             foreach (var obj in TestClasses.GetItemsContext().Objects)
                 TestClasses.Remove(obj.Key);
@@ -39,6 +41,30 @@ namespace Repository.Tests
             TestClasses.Dispose();
             Fixtures.Dispose();
             WorkOrders.Dispose();
+            StringKeys.Dispose();
+        }
+        //===============================================================
+        [Test]
+        public void RetrieveCorrectObjects()
+        {
+            TestClasses.Store(new TestClass());
+
+            using (var obj = TestClasses.Find(1))
+            {
+                Assert.NotNull(obj.Object);
+            }
+
+            using (var obj = TestClasses.Find(2))
+            {
+                Assert.Null(obj.Object);
+            }
+
+            StringKeys.Store(new StringKeyClass("asarda@umich.edu-blahblahblah"));
+
+            using (var obj = StringKeys.Find("asarda@umich.edu"))
+            {
+                Assert.Null(obj.Object);
+            }
         }
         //===============================================================
         [Test]

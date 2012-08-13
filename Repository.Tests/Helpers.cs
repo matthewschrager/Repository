@@ -6,6 +6,18 @@ using System.Text;
 
 namespace Repository.Tests
 {
+    internal class StringKeyClass
+    {
+        //===============================================================
+        public StringKeyClass(String key)
+        {
+            Key = key;
+        }
+        //===============================================================
+        public String Key { get; set; }
+        //===============================================================
+    }
+
     class TestClass
     {
         //===============================================================
