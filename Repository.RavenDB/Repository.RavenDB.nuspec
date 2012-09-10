@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>$version$-beta</version>
+    <version>$version$</version>
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
@@ -10,12 +10,12 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
 	<projectUrl>https://github.com/matthewschrager/Repository</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Updated project description and added GitHub URL.</releaseNotes>
+    <releaseNotes>Updated to stable release of RavenDB.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository RavenDB</tags>
 	<dependencies>
 		<dependency id="Repository" />
-		<dependency id="RavenDB.Client" version="1.2.2023-Unstable" />
+		<dependency id="RavenDB.Client" />
 	</dependencies>
   </metadata>
 </package>

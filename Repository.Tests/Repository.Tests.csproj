@@ -47,19 +47,8 @@
     <Reference Include="nunit.framework, Version=2.6.0.12051, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.2.6.0.12054\lib\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="Raven.Abstractions, Version=1.2.0.0, Culture=neutral, PublicKeyToken=37f41c7f99471593, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\RavenDB.Client.1.2.2033-Unstable\lib\net40\Raven.Abstractions.dll</HintPath>
-    </Reference>
     <Reference Include="Raven.Client.Embedded">
       <HintPath>..\Repository.RavenDB\bin\Debug\Raven.Client.Embedded.dll</HintPath>
-    </Reference>
-    <Reference Include="Raven.Client.Lightweight, Version=1.2.0.0, Culture=neutral, PublicKeyToken=37f41c7f99471593, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\RavenDB.Client.1.2.2033-Unstable\lib\net40\Raven.Client.Lightweight.dll</HintPath>
-    </Reference>
-    <Reference Include="Raven.Imports.SignalR.Client">
-      <HintPath>..\packages\RavenDB.Client.1.2.2033-Unstable\lib\net40\Raven.Imports.SignalR.Client.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
