@@ -15,7 +15,7 @@ using Raven.Json.Linq;
 
 namespace Repository.RavenDB
 {
-    public class RavenRepository<T> : IRepository<T> where T : class
+    public class RavenRepository<T> : IDisposable, IRepository<T> where T : class
     {
         //===============================================================
         private RavenRepository(DocumentStore documentStore, Func<T, Object[]> keySelector)
@@ -69,7 +69,7 @@ namespace Repository.RavenDB
         //===============================================================
         public int TimeoutInMilliseconds { get; set; }
         //===============================================================
-        private DocumentStore DocumentStore { get; set; }
+        public DocumentStore DocumentStore { get; set; }
         //===============================================================
         private Func<T, Object[]> KeySelector { get; set; }
         //===============================================================
@@ -785,5 +785,23 @@ namespace Repository.RavenDB
             }
 
         }
+        //===============================================================
+        [Test]
+        public void WhereQueriesWork()
+        {
+            var obj1 = new TestClass { Key = 1, Value1 = 1, StringProperty = "blah1" };
+            var obj2 = new TestClass { Key = 2, Value1 = 2, StringProperty = "blah2" };
+
+            TestClasses.Store(new[] { obj1, obj2 });
+
+            var result = TestClasses.GetItemsContext().Objects.Where(x => x.Value1 == 1).ToList();
+            Assert.AreEqual(result.First().Key, obj1.Key);
+            Assert.AreEqual(result.Count, 1);
+
+            result = TestClasses.GetItemsContext().Objects.Where(x => x.StringProperty == "blah1").ToList();
+            Assert.AreEqual(result.First().Key, obj1.Key);
+            Assert.AreEqual(result.Count, 1);
+        }
+        //===============================================================
     }
 }

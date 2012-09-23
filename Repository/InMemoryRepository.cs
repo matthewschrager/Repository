@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using NUnit.Framework;
 
 namespace Repository
 {
@@ -157,5 +158,51 @@ namespace Repository
             // Do nothing, since in-memory takes care of it
         }
         //===============================================================
+    }
+
+    /// <summary>
+    ///This is a test class for InMemoryRepositoryTest and is intended
+    ///to contain all InMemoryRepositoryTest Unit Tests
+    ///</summary>
+    [TestFixture]
+    public class InMemoryRepositoryTest
+    {
+
+
+        private TestContext testContextInstance;
+
+        /// <summary>
+        ///Gets or sets the test context which provides
+        ///information about and functionality for the current test run.
+        ///</summary>
+        public TestContext TestContext
+        {
+            get
+            {
+                return testContextInstance;
+            }
+            set
+            {
+                testContextInstance = value;
+            }
+        }
+
+
+        [Test]
+        public void UpdateTest()
+        {
+            var repository = new InMemoryRepository<TestClass>(x => x.Key);
+            repository.Store(new TestClass());
+            repository.Update(new { Value2 = DateTime.MaxValue }, 1);
+
+            var val = repository.Find(1).Object;
+            Assert.AreEqual(val.Value2, DateTime.MaxValue);
+
+            var obj = new { Value2 = DateTime.MaxValue };
+            repository.Update(obj, x => x.Property, 1);
+            Assert.AreEqual(val.Property.Value2, DateTime.MaxValue);
+            Assert.AreEqual(val.Property.Value1.Value, 1);
+
+        }
     }
 }

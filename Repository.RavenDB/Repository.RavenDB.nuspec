@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
 	<projectUrl>https://github.com/matthewschrager/Repository</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Updated to stable release of RavenDB.</releaseNotes>
+    <releaseNotes>Exposed RavenDB document store for advanced operations.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository RavenDB</tags>
 	<dependencies>
