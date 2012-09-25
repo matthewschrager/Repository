@@ -81,7 +81,6 @@ namespace Repository.EntityFramework
                 var set = SetSelector(c);
                 return set.Find(keys) != null;
             }
-
         }
         //===============================================================
         public IObjectContext<TValue> Find(params Object[] keys)
