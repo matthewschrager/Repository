@@ -41,11 +41,8 @@ namespace Repository.EntityFramework
             using (var c = ContextFactory())
             {
                 var set = SetSelector(c);
-                var existingValue = set.Find(KeySelector(value));
-                if (existingValue != null)
-                    return;
-
                 set.Add(value);
+
                 c.SaveChanges();
             }
         }
