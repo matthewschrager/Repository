@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
+using MoreLinq;
+using NUnit.Framework;
 
 namespace Repository.EntityFramework
 {
@@ -24,6 +28,7 @@ namespace Repository.EntityFramework
 
             SetSelector = setSelector;
             KeySelector = keySelector;
+            InsertBatchSize = 100;
         }
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, Func<TContext> contextFactory = null)
@@ -35,6 +40,8 @@ namespace Repository.EntityFramework
         private Func<TContext, DbSet<TValue>> SetSelector { get; set; }
         //===============================================================
         private Func<TValue, Object[]> KeySelector { get; set; }
+        //===============================================================
+        public int InsertBatchSize { get; set; }
         //===============================================================
         public void Store(TValue value)
         {
@@ -49,14 +56,19 @@ namespace Repository.EntityFramework
         //===============================================================
         public void Store(IEnumerable<TValue> values)
         {
-            using (var c = ContextFactory())
-            {
-                var set = SetSelector(c);
-                foreach (var x in values)
-                    set.Add(x);
+            // Batch up the insert into smaller chunks
+            var batches = values.Batch(InsertBatchSize).ToList();
+            Parallel.ForEach(batches, batch =>
+                {
+                    using (var c = ContextFactory())
+                    {
+                        var set = SetSelector(c);
+                        foreach (var x in batch)
+                            set.Add(x);
 
-                c.SaveChanges();
-            }
+                        c.SaveChanges();
+                    }
+                });
         }
         //===============================================================
         public void Remove(params Object[] keys)
@@ -191,6 +203,39 @@ namespace Repository.EntityFramework
         public void SaveChanges()
         {
             Context.SaveChanges();
+        }
+        //===============================================================
+    }
+
+    internal class TestObject
+    {
+        //===============================================================
+        [Key]
+        public int ID { get; set; }
+        //===============================================================
+        public String Value { get; set; }
+        //===============================================================
+    }
+
+    internal class TestContext : DbContext
+    {
+        //===============================================================
+        public DbSet<TestObject> Objects { get; set; }
+        //===============================================================
+    }
+
+    [TestFixture]
+    internal class EFRepositoryTests
+    {
+        //===============================================================
+        [Test]
+        public void BatchInsertTest()
+        {
+            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            {
+                var objects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x, Value = x.ToString() }).ToList();
+                repo.Store(objects);
+            }
         }
         //===============================================================
     }
