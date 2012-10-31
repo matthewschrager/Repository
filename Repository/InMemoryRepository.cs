@@ -165,7 +165,7 @@ namespace Repository
     ///to contain all InMemoryRepositoryTest Unit Tests
     ///</summary>
     [TestFixture]
-    public class InMemoryRepositoryTest
+    internal class InMemoryRepositoryTest
     {
 
 

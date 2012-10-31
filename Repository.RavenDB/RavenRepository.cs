@@ -484,7 +484,7 @@ namespace Repository.RavenDB
 
 
     [TestFixture]
-    public class RavenTests
+    internal class RavenTests
     {
         private RavenRepository<TestClass> TestClasses;
         private RavenRepository<Fixture> Fixtures;
