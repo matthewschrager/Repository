@@ -13,5 +13,8 @@
     <releaseNotes>Added basic documentation.</releaseNotes>
     <copyright>Copyright Matthew Schrager 2012</copyright>
     <tags>Repository</tags>
+    <dependencies>
+      <dependency id="AutoMapper" version="[2.2.0]"></dependency>
+    </dependencies>
   </metadata>
 </package>

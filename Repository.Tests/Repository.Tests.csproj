@@ -36,6 +36,10 @@
     <Reference Include="AutoMapper">
       <HintPath>..\packages\AutoMapper.2.1.267\lib\net40\AutoMapper.dll</HintPath>
     </Reference>
+    <Reference Include="EntityFramework, Version=4.4.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\EntityFramework.5.0.0\lib\net40\EntityFramework.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Newtonsoft.Json">
@@ -69,24 +73,29 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EFTests.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="InMemoryRepositoryTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RavenTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Repository.EntityFramework\Repository.EntityFramework.csproj">
+      <Project>{e6875049-be49-44b0-9a4b-6b3571375cc6}</Project>
+      <Name>Repository.EntityFramework</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Repository.RavenDB\Repository.RavenDB.csproj">
-      <Project>{29D9D06F-24BA-4C7B-8CAE-79058C0E447E}</Project>
+      <Project>{29d9d06f-24ba-4c7b-8cae-79058c0e447e}</Project>
       <Name>Repository.RavenDB</Name>
     </ProjectReference>
     <ProjectReference Include="..\Repository\Repository.csproj">
-      <Project>{3F3C814E-62AD-4065-8E75-068607D5BB69}</Project>
+      <Project>{3f3c814e-62ad-4065-8e75-068607d5bb69}</Project>
       <Name>Repository</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
