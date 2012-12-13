@@ -17,35 +17,38 @@ namespace Repository.RavenDB
     public class RavenRepository<T> : IDisposable, IRepository<T> where T : class
     {
         //===============================================================
-        private RavenRepository(DocumentStore documentStore, Func<T, Object[]> keySelector)
+        private RavenRepository(DocumentStore documentStore, Func<T, Object[]> keySelector, String collectionName = null)
         {
             TimeoutInMilliseconds = 5000;
             DocumentStore = documentStore;
             KeySelector = keySelector;
+            ManualCollectionName = collectionName;
 
             DocumentStore.Conventions.DocumentKeyGenerator = (c, o) => KeyGenerator(KeySelector(o as T));
+            DocumentStore.Conventions.FindTypeTagName = t => ManualCollectionName ?? DocumentConvention.DefaultTypeTagName(t); 
+            
             DocumentStore.Initialize();
             DocumentStore.JsonRequestFactory.ConfigureRequest += (s, e) => e.Request.Timeout = TimeoutInMilliseconds;
         }
         //===============================================================
-        public static RavenRepository<T> FromUrlAndApiKey(String url, String apiKey, Func<T, Object[]> keySelector)
+        public static RavenRepository<T> FromUrlAndApiKey(String url, String apiKey, Func<T, Object[]> keySelector, String collectionName = null)
         {
-            return new RavenRepository<T>(new DocumentStore { Url = url, ApiKey = apiKey }, keySelector);
+            return new RavenRepository<T>(new DocumentStore { Url = url, ApiKey = apiKey }, keySelector, collectionName);
         }
         //===============================================================
-        public static RavenRepository<T> FromUrlAndApiKey(String url, String apiKey, Func<T, Object> keySelector)
+        public static RavenRepository<T> FromUrlAndApiKey(String url, String apiKey, Func<T, Object> keySelector, String collectionName = null)
         {
-            return FromUrlAndApiKey(url, apiKey, x => new[] { keySelector(x) });
+            return FromUrlAndApiKey(url, apiKey, x => new[] { keySelector(x) }, collectionName);
         }
         //===============================================================
-        public static RavenRepository<T> FromNamedConnectionString(String connectionStringName, Func<T, Object[]> keySelector)
+        public static RavenRepository<T> FromNamedConnectionString(String connectionStringName, Func<T, Object[]> keySelector, String collectionName = null)
         {
-            return new RavenRepository<T>(new DocumentStore { ConnectionStringName = connectionStringName }, keySelector);
+            return new RavenRepository<T>(new DocumentStore { ConnectionStringName = connectionStringName }, keySelector, collectionName);
         }
         //===============================================================
-        public static RavenRepository<T> FromNamedConnectionString(String connectionStringName, Func<T, Object> keySelector)
+        public static RavenRepository<T> FromNamedConnectionString(String connectionStringName, Func<T, Object> keySelector, String collectionName = null)
         {
-            return FromNamedConnectionString(connectionStringName, x => new[] { keySelector(x) });
+            return FromNamedConnectionString(connectionStringName, x => new[] { keySelector(x) }, collectionName);
         }
         //===============================================================
         private String KeyGenerator(IEnumerable<Object> keys)
@@ -65,6 +68,8 @@ namespace Repository.RavenDB
             var key = DocumentStore.Conventions.GetTypeTagName(typeof(T)) + "/" + strings.Aggregate((x, y) => x + "/" + y);
             return key;
         }
+        //===============================================================
+        public String ManualCollectionName { get; set; }
         //===============================================================
         public int TimeoutInMilliseconds { get; set; }
         //===============================================================
