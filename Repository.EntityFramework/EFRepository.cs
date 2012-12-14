@@ -11,7 +11,7 @@ using NUnit.Framework;
 
 namespace Repository.EntityFramework
 {
-    public class EFRepository<TContext, TValue> : Repository<TValue> where TValue : class where TContext : DbContext
+    public class EFRepository<TContext, TValue> : IRepository<TValue> where TValue : class where TContext : DbContext
     {
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, Func<TContext> contextFactory = null)
@@ -45,7 +45,7 @@ namespace Repository.EntityFramework
         //===============================================================
         public int InsertBatchSize { get; set; }
         //===============================================================
-        public override void Store(TValue value)
+        public void Store(TValue value)
         {
             using (var c = ContextFactory())
             {
@@ -56,7 +56,7 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public override void Store(IEnumerable<TValue> values)
+        public void Store(IEnumerable<TValue> values)
         {
             // Batch up the insert into smaller chunks
             var batches = values.Batch(InsertBatchSize).ToList();
@@ -73,7 +73,7 @@ namespace Repository.EntityFramework
                 });
         }
         //===============================================================
-        public override void Remove(params Object[] keys)
+        public void Remove(params Object[] keys)
         {
             using (var c = ContextFactory())
             {
@@ -85,7 +85,7 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public override bool Exists(params Object[] keys)
+        public bool Exists(params Object[] keys)
         {
             using (var c = ContextFactory())
             {
@@ -94,20 +94,20 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public override ObjectContext<TValue> Find(params Object[] keys)
+        public ObjectContext<TValue> Find(params Object[] keys)
         {
             var c = ContextFactory();
             var set = SetSelector(c);
             return new EFObjectContext<TValue>(set.Find(keys), c);
         }
         //===============================================================
-        protected override EnumerableObjectContext<TValue> GetItemsContext()
+        public EnumerableObjectContext<TValue> Items()
         {
             var context = ContextFactory();
             return new EFEnumerableObjectContext<TValue>(SetSelector(context), context);
         }
         //===============================================================
-        public override void Update<T>(T value, params Object[] keys)
+        public void Update<T>(T value, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -116,7 +116,7 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public override void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
+        public void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -124,12 +124,12 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
+        public void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
         {
             throw new NotImplementedException();
         }
         //===============================================================
-        public override void Update(string json, UpdateType updateType, params object[] keys)
+        public void Update(string json, UpdateType updateType, params object[] keys)
         {
             throw new NotImplementedException();
         }
@@ -138,7 +138,7 @@ namespace Repository.EntityFramework
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public override void Dispose()
+        public void Dispose()
         {
             // EF repository doesn't need to do anything, because it creates contexts for each request.
         }

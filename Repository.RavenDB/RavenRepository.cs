@@ -14,7 +14,7 @@ using Raven.Json.Linq;
 
 namespace Repository.RavenDB
 {
-    public class RavenRepository<T> : Repository<T>, IDisposable where T : class
+    public class RavenRepository<T> : IDisposable, IRepository<T> where T : class
     {
         //===============================================================
         private RavenRepository(DocumentStore documentStore, Func<T, Object[]> keySelector, String collectionName = null)
@@ -77,7 +77,7 @@ namespace Repository.RavenDB
         //===============================================================
         private Func<T, Object[]> KeySelector { get; set; }
         //===============================================================
-        public override void Store(T value)
+        public void Store(T value)
         {
             try
             {
@@ -105,7 +105,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public override void Store(IEnumerable<T> values)
+        public void Store(IEnumerable<T> values)
         {
             try
             {
@@ -137,7 +137,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public override void Remove(params object[] keys)
+        public void Remove(params object[] keys)
         {
             using (var session = DocumentStore.OpenSession())
             {
@@ -146,7 +146,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public override bool Exists(params Object[] keys)
+        public bool Exists(params Object[] keys)
         {
             using (var session = DocumentStore.OpenSession())
             {
@@ -155,21 +155,21 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public override ObjectContext<T> Find(params object[] keys)
+        public ObjectContext<T> Find(params object[] keys)
         {
             var session = DocumentStore.OpenSession();
             var obj = session.Load<T>(KeyGenerator(keys));
             return new RavenObjectContext<T>(obj, session, x => KeyGenerator(KeySelector(x)));
         }
         //===============================================================
-        protected override EnumerableObjectContext<T> GetItemsContext()
+        public EnumerableObjectContext<T> Items()
         {
             var session = DocumentStore.OpenSession();
             var obj = session.Query<T>();
             return new RavenEnumerableObjectContext<T>(obj, session);
         }
         //===============================================================
-        public override void Update<TValue>(TValue value, params Object[] keys)
+        public void Update<TValue>(TValue value, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -178,7 +178,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
+        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -187,7 +187,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public override void Update(String json, UpdateType updateType, params Object[] keys)
+        public void Update(String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
@@ -195,7 +195,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public override void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys)
+        public void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
@@ -255,7 +255,7 @@ namespace Repository.RavenDB
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public override void Dispose()
+        public void Dispose()
         {
             DocumentStore.Dispose();
         }

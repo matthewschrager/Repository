@@ -25,11 +25,11 @@ namespace Repository.Tests
             WorkOrders = RavenRepository<Repository.WorkOrder>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.ID);
             StringKeys = RavenRepository<Repository.StringKeyClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
 
-            foreach (var obj in TestClasses)
+            foreach (var obj in TestClasses.Items())
                 TestClasses.Remove(obj.Key);
-            foreach (var obj in Fixtures)
+            foreach (var obj in Fixtures.Items())
                 Fixtures.Remove(obj.FixtureID);
-            foreach (var obj in WorkOrders)
+            foreach (var obj in WorkOrders.Items())
                 WorkOrders.Remove(obj.ID);
         }
         //===============================================================
@@ -319,11 +319,11 @@ namespace Repository.Tests
 
             TestClasses.Store(new[] { obj1, obj2 });
 
-            var result = TestClasses.Where(x => x.Value1 == 1).ToList();
+            var result = TestClasses.Items().Where(x => x.Value1 == 1).ToList();
             Assert.AreEqual(result.First().Key, obj1.Key);
             Assert.AreEqual(result.Count, 1);
 
-            result = TestClasses.Where(x => x.StringProperty == "blah1").ToList();
+            result = TestClasses.Items().Where(x => x.StringProperty == "blah1").ToList();
             Assert.AreEqual(result.First().Key, obj1.Key);
             Assert.AreEqual(result.Count, 1);
         }
