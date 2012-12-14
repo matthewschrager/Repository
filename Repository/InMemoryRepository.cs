@@ -8,7 +8,7 @@ using NUnit.Framework;
 
 namespace Repository
 {
-    public class InMemoryRepository<T> : IRepository<T> where T : class
+    public class InMemoryRepository<T> : Repository<T> where T : class
     {
         private ConcurrentDictionary<String, T> mData = new ConcurrentDictionary<string, T>();
 
@@ -20,18 +20,18 @@ namespace Repository
         //===============================================================
         private Func<T, Object> KeySelector { get; set; }
         //===============================================================
-        public void Store(T value)
+        public override void Store(T value)
         {
             mData[KeySelector(value).ToString()] = value;
         }
         //===============================================================
-        public void Store(IEnumerable<T> values)
+        public override void Store(IEnumerable<T> values)
         {
             foreach (var x in values)
                 Store(x);
         }
         //===============================================================
-        public void Remove(params Object[] keys)
+        public override void Remove(params Object[] keys)
         {
             if (keys.Length > 1)
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
@@ -40,7 +40,7 @@ namespace Repository
             mData.TryRemove(keys.First().ToString(), out removedObj);
         }
         //===============================================================
-        public bool Exists(params Object[] keys)
+        public override bool Exists(params Object[] keys)
         {
             if (keys.Length > 1)
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
@@ -48,7 +48,7 @@ namespace Repository
             return mData.ContainsKey(keys.First().ToString());
         }
         //===============================================================
-        public ObjectContext<T> Find(params Object[] keys)
+        public override ObjectContext<T> Find(params Object[] keys)
         {
             if (keys.Length > 1)
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
@@ -58,12 +58,12 @@ namespace Repository
             return new InMemoryObjectContext<T>(obj);
         }
         //===============================================================
-        public EnumerableObjectContext<T> GetItemsContext()
+        protected override EnumerableObjectContext<T> GetItemsContext()
         {
             return new InMemoryEnumerableObjectContext<T>(mData.Values.AsQueryable());
         }
         //===============================================================
-        public void Update<TValue>(TValue value, params Object[] keys)
+        public override void Update<TValue>(TValue value, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -72,7 +72,7 @@ namespace Repository
             }
         }
         //===============================================================
-        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
+        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -81,12 +81,12 @@ namespace Repository
             }
         }
         //===============================================================
-        public void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
+        public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
         {
             throw new NotImplementedException();
         }
         //===============================================================
-        public void Update(string json, UpdateType updateType, params object[] keys)
+        public override void Update(string json, UpdateType updateType, params object[] keys)
         {
             throw new NotImplementedException();
         }
@@ -95,7 +95,7 @@ namespace Repository
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public void Dispose()
+        public override void Dispose()
         {
             // In-memory repository doesn't need to dispose of anything.
         }
