@@ -27,9 +27,9 @@ namespace Repository
         //===============================================================
         void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys);
         //===============================================================
-        IObjectContext<T> Find(params Object[] keys);
+        ObjectContext<T> Find(params Object[] keys);
         //===============================================================
-        IEnumerableObjectContext<T> GetItemsContext();
+        EnumerableObjectContext<T> GetItemsContext();
         //===============================================================
 
     }

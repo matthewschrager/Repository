@@ -155,14 +155,14 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public IObjectContext<T> Find(params object[] keys)
+        public ObjectContext<T> Find(params object[] keys)
         {
             var session = DocumentStore.OpenSession();
             var obj = session.Load<T>(KeyGenerator(keys));
             return new RavenObjectContext<T>(obj, session, x => KeyGenerator(KeySelector(x)));
         }
         //===============================================================
-        public IEnumerableObjectContext<T> GetItemsContext()
+        public EnumerableObjectContext<T> GetItemsContext()
         {
             var session = DocumentStore.OpenSession();
             var obj = session.Query<T>();
@@ -262,12 +262,14 @@ namespace Repository.RavenDB
         //===============================================================
     }
 
-    public class RavenObjectContext<T> : IObjectContext<T> where T : class
+    public class RavenObjectContext<T> : ObjectContext<T> where T : class
     {
+        private T mObject;
+
         //===============================================================
         public RavenObjectContext(T obj, IDocumentSession session, Func<T, String> keyGenerator)
         {
-            Object = obj;
+            mObject = obj;
             Session = session;
             KeyGenerator = keyGenerator;
         }
@@ -280,24 +282,27 @@ namespace Repository.RavenDB
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public void Dispose()
+        public override void Dispose()
         {
             Session.Dispose();
         }
         //===============================================================
-        public T Object { get; private set; }
+        public override T Object
+        {
+            get { return mObject; }
+        }
         //===============================================================
-        public void SaveChanges()
+        public override void SaveChanges()
         {
             Session.SaveChanges();
         }
         //===============================================================
-        public void Update<TValue>(TValue value)
+        public override void Update<TValue>(TValue value)
         {
             AutoMapper.Mapper.DynamicMap(value, Object);
         }
         //===============================================================
-        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
+        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
         {
             AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
@@ -460,25 +465,30 @@ namespace Repository.RavenDB
         //===============================================================
     }
 
-    public class RavenEnumerableObjectContext<T> : IEnumerableObjectContext<T> where T : class 
+    public class RavenEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
     {
+        private IQueryable<T> mObjects;
+
         //===============================================================
         public RavenEnumerableObjectContext(IQueryable<T> objects, IDocumentSession session)
         {
-            Objects = objects;
+            mObjects = objects;
             Session = session;
         }
         //===============================================================
         private IDocumentSession Session { get; set; }
         //===============================================================
-        public IQueryable<T> Objects { get; private set; }
+        protected override IQueryable<T> Objects
+        {
+            get { return mObjects; }
+        }
         //===============================================================
-        public void Dispose()
+        public override void Dispose()
         {
             Session.Dispose();
         }
         //===============================================================
-        public void SaveChanges()
+        public override void SaveChanges()
         {
             Session.SaveChanges();
         }

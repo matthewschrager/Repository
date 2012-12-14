@@ -48,7 +48,7 @@ namespace Repository
             return mData.ContainsKey(keys.First().ToString());
         }
         //===============================================================
-        public IObjectContext<T> Find(params Object[] keys)
+        public ObjectContext<T> Find(params Object[] keys)
         {
             if (keys.Length > 1)
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
@@ -58,7 +58,7 @@ namespace Repository
             return new InMemoryObjectContext<T>(obj);
         }
         //===============================================================
-        public IEnumerableObjectContext<T> GetItemsContext()
+        public EnumerableObjectContext<T> GetItemsContext()
         {
             return new InMemoryEnumerableObjectContext<T>(mData.Values.AsQueryable());
         }
@@ -102,58 +102,68 @@ namespace Repository
         //===============================================================
     }
 
-    public class InMemoryObjectContext<T> : IObjectContext<T> where T : class
+    public class InMemoryObjectContext<T> : ObjectContext<T> where T : class
     {
+        private T mObject; 
+
         //===============================================================
         public InMemoryObjectContext(T value)
         {
-            Object = value;
+            mObject = value;
         }
         //===============================================================
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public void Dispose()
+        public override void Dispose()
         {
             // Do nothing, since in memory objects are automatically disposed
         }
         //===============================================================
-        public T Object { get; private set; }
+        public override T Object
+        {
+            get { return mObject; }
+        }
         //===============================================================
-        public void SaveChanges()
+        public override void SaveChanges()
         {
             // Do nothing - stuff is automatically saved.
         }
         //===============================================================
-        public void Update<TValue>(TValue value)
+        public override void Update<TValue>(TValue value)
         {
             AutoMapper.Mapper.DynamicMap(value, Object);
         }
         //===============================================================
-        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
+        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
         {
             AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
         //===============================================================
     }
 
-    public class InMemoryEnumerableObjectContext<T> : IEnumerableObjectContext<T> where T : class
+    public class InMemoryEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
     {
+        private IQueryable<T> mObjects;
+
         //===============================================================
         public InMemoryEnumerableObjectContext(IQueryable<T> objects)
         {
-            Objects = objects;
+            mObjects = objects;
         }
         //===============================================================
-        public void Dispose()
+        public override void Dispose()
         {
             // Do nothing, since in-memory objects are automatically disposed
         }
         //===============================================================
-        public IQueryable<T> Objects { get; private set; }
+        protected override IQueryable<T> Objects
+        {
+            get { return mObjects; }
+        }
         //===============================================================
-        public void SaveChanges()
+        public override void SaveChanges()
         {
             // Do nothing, since in-memory takes care of it
         }

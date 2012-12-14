@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MoreLinq;
 using NUnit.Framework;
@@ -92,14 +94,14 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public IObjectContext<TValue> Find(params Object[] keys)
+        public ObjectContext<TValue> Find(params Object[] keys)
         {
             var c = ContextFactory();
             var set = SetSelector(c);
             return new EFObjectContext<TValue>(set.Find(keys), c);
         }
         //===============================================================
-        public IEnumerableObjectContext<TValue> GetItemsContext()
+        public EnumerableObjectContext<TValue> GetItemsContext()
         {
             var context = ContextFactory();
             return new EFEnumerableObjectContext<TValue>(SetSelector(context), context);
@@ -143,30 +145,35 @@ namespace Repository.EntityFramework
         //===============================================================
     }
 
-    public class EFObjectContext<T> : IObjectContext<T> where T : class
+    public class EFObjectContext<T> : ObjectContext<T> where T : class
     {
+        private T mObject;
+
         //===============================================================
         public EFObjectContext(T value, DbContext context)
         {
-            Object = value;
+            mObject = value;
             Context = context;
         }
         //===============================================================
-        public T Object { get; private set; }
+        public override T Object
+        {
+            get { return mObject; }
+        }
         //===============================================================
         private DbContext Context { get; set; }
         //===============================================================
-        public void SaveChanges()
+        public override void SaveChanges()
         {
             Context.SaveChanges();
         }
         //===============================================================
-        public void Update<TValue>(TValue value)
+        public override void Update<TValue>(TValue value)
         {
             AutoMapper.Mapper.DynamicMap(value, Object);
         }
         //===============================================================
-        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
+        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
         {
             AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
@@ -175,32 +182,37 @@ namespace Repository.EntityFramework
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public void Dispose()
+        public override void Dispose()
         {
             Context.Dispose();
         }
         //===============================================================
     }
 
-    public class EFEnumerableObjectContext<T> : IEnumerableObjectContext<T> where T : class
+    public class EFEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
     {
+        private IQueryable<T> mObjects;
+
         //===============================================================
         public EFEnumerableObjectContext(IQueryable<T> objects, DbContext context)
         {
             Context = context;
-            Objects = objects;
+            mObjects = objects;
         }
         //===============================================================
         private DbContext Context { get; set; }
         //===============================================================
-        public void Dispose()
+        public override void Dispose()
         {
             Context.Dispose();
         }
         //===============================================================
-        public IQueryable<T> Objects { get; private set; }
+        protected override IQueryable<T> Objects
+        {
+            get { return mObjects; }
+        }
         //===============================================================
-        public void SaveChanges()
+        public override void SaveChanges()
         {
             Context.SaveChanges();
         }
