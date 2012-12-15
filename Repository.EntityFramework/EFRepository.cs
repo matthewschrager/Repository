@@ -17,7 +17,12 @@ namespace Repository.EntityFramework
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, Func<TContext> contextFactory = null)
         {
             if (contextFactory != null)
-                ContextFactory = contextFactory;
+                ContextFactory = () =>
+                    {
+                        var c = contextFactory();
+                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
+                        return c;
+                    };
             else
             {
                 // Find a parameterless constructor. If none exists, throw an exception that lets the user know he must provide a factory that handles constructor parameters
@@ -25,17 +30,25 @@ namespace Repository.EntityFramework
                 if (parameterlessConstructor == null)
                     throw new ArgumentException("A default context factory can only be created if the context type (TContext) has a parameterless constructor.");
 
-                ContextFactory = () => Activator.CreateInstance(typeof(TContext)) as TContext;
+                ContextFactory = () =>
+                    {
+                        var c = Activator.CreateInstance(typeof(TContext)) as TContext;
+                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
+                        return c;
+                    };
             }
 
             SetSelector = setSelector;
             KeySelector = keySelector;
             InsertBatchSize = 100;
+            LazyLoadingEnabled = true;
         }
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, Func<TContext> contextFactory = null)
             : this(setSelector, x => new[] { keySelector(x) }, contextFactory)
         {}
+        //===============================================================
+        public bool LazyLoadingEnabled { get; set; }
         //===============================================================
         private Func<TContext> ContextFactory { get; set; }
         //===============================================================
@@ -81,6 +94,21 @@ namespace Repository.EntityFramework
                 var obj = set.Find(keys);
                 set.Remove(obj);
                 
+                c.SaveChanges();
+            }
+        }
+        //===============================================================
+        public void Remove(IEnumerable<Object[]> keys)
+        {
+            using (var c = ContextFactory())
+            {
+                var set = SetSelector(c);
+                foreach (var keySet in keys)
+                {
+                    var obj = set.Find(keys);
+                    set.Remove(obj);
+                }
+
                 c.SaveChanges();
             }
         }

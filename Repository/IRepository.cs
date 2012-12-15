@@ -17,6 +17,8 @@ namespace Repository
         //===============================================================
         void Remove(params Object[] keys);
         //===============================================================
+        void Remove(IEnumerable<Object[]> keys);
+        //===============================================================
         bool Exists(params Object[] keys);
         //===============================================================
         void Update<TValue>(TValue value, params Object[] keys);

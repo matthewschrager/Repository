@@ -40,6 +40,12 @@ namespace Repository
             mData.TryRemove(keys.First().ToString(), out removedObj);
         }
         //===============================================================
+        public void Remove(IEnumerable<Object[]> keys)
+        {
+            foreach (var x in keys)
+                Remove(x);
+        }
+        //===============================================================
         public bool Exists(params Object[] keys)
         {
             if (keys.Length > 1)

@@ -19,11 +19,11 @@ namespace Repository.RavenDB
         //===============================================================
         private RavenRepository(DocumentStore documentStore, Func<T, Object[]> keySelector, String collectionName = null)
         {
+            PageSize = 1024;
             TimeoutInMilliseconds = 5000;
             DocumentStore = documentStore;
             KeySelector = keySelector;
             ManualCollectionName = collectionName;
-
             DocumentStore.Conventions.DocumentKeyGenerator = (c, o) => KeyGenerator(KeySelector(o as T));
             DocumentStore.Conventions.FindTypeTagName = t => ManualCollectionName ?? DocumentConvention.DefaultTypeTagName(t); 
             
@@ -68,6 +68,8 @@ namespace Repository.RavenDB
             var key = DocumentStore.Conventions.GetTypeTagName(typeof(T)) + "/" + strings.Aggregate((x, y) => x + "/" + y);
             return key;
         }
+        //===============================================================
+        public uint PageSize { get; set; }
         //===============================================================
         public String ManualCollectionName { get; set; }
         //===============================================================
@@ -142,6 +144,17 @@ namespace Repository.RavenDB
             using (var session = DocumentStore.OpenSession())
             {
                 session.Advanced.Defer(new DeleteCommandData { Key = KeyGenerator(keys) });
+                session.SaveChanges();
+            }
+        }
+        //===============================================================
+        public void Remove(IEnumerable<Object[]> keys)
+        {
+            using (var session = DocumentStore.OpenSession())
+            {
+                foreach (var keySet in keys)
+                    session.Advanced.Defer(new DeleteCommandData { Key = KeyGenerator(keySet) });
+
                 session.SaveChanges();
             }
         }
