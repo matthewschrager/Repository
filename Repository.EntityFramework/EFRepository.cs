@@ -14,125 +14,138 @@ namespace Repository.EntityFramework
     public class EFRepository<TContext, TValue> : IRepository<TValue> where TValue : class where TContext : DbContext
     {
         //===============================================================
-        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, Func<TContext> contextFactory = null)
+        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, TContext context = null)
         {
-            if (contextFactory != null)
-                ContextFactory = () =>
-                    {
-                        var c = contextFactory();
-                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
-                        return c;
-                    };
-            else
+            OwnsContext = false;
+
+            if (context == null)
             {
-                // Find a parameterless constructor. If none exists, throw an exception that lets the user know he must provide a factory that handles constructor parameters
+                // Find a parameterless constructor. If none exists, throw an exception that lets the user know he must provide a context to this constructor
                 var parameterlessConstructor = typeof(TContext).GetConstructor(new Type[] { });
                 if (parameterlessConstructor == null)
-                    throw new ArgumentException("A default context factory can only be created if the context type (TContext) has a parameterless constructor.");
+                    throw new ArgumentException("A default context can only be created if the context type (TContext) has a parameterless constructor.");
 
-                ContextFactory = () =>
-                    {
-                        var c = Activator.CreateInstance(typeof(TContext)) as TContext;
-                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
-                        return c;
-                    };
+                context = Activator.CreateInstance(typeof(TContext)) as TContext;
+                OwnsContext = true;
             }
 
+            Context = context;
+            Context.Configuration.LazyLoadingEnabled = true;
             SetSelector = setSelector;
             KeySelector = keySelector;
-            InsertBatchSize = 100;
             LazyLoadingEnabled = true;
+            InsertBatchSize = 100;
+
+            // Force the model to be created
+            var dummy = SetSelector(Context).Any();
         }
         //===============================================================
-        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, Func<TContext> contextFactory = null)
-            : this(setSelector, x => new[] { keySelector(x) }, contextFactory)
-        {}
+        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, TContext context = null)
+            : this(setSelector, x => new[] { keySelector(x) }, context)
+        { }
+        //===============================================================
+//        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, Func<TContext> contextFactory = null)
+//        {
+//            if (contextFactory != null)
+//                ContextFactory = () =>
+//                    {
+//                        var c = contextFactory();
+//                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
+//                        return c;
+//                    };
+//            else
+//            {
+//                // Find a parameterless constructor. If none exists, throw an exception that lets the user know he must provide a factory that handles constructor parameters
+//                var parameterlessConstructor = typeof(TContext).GetConstructor(new Type[] { });
+//                if (parameterlessConstructor == null)
+//                    throw new ArgumentException("A default context factory can only be created if the context type (TContext) has a parameterless constructor.");
+//
+//                ContextFactory = () =>
+//                    {
+//                        var c = Activator.CreateInstance(typeof(TContext)) as TContext;
+//                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
+//                        return c;
+//                    };
+//            }
+//
+//            SetSelector = setSelector;
+//            KeySelector = keySelector;
+//            InsertBatchSize = 100;
+//            LazyLoadingEnabled = true;
+//
+//            // For now, we use a single context for the lifespan of this repository
+//            Context = ContextFactory();
+//        }
+        //===============================================================
+//        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, Func<TContext> contextFactory = null)
+//            : this(setSelector, x => new[] { keySelector(x) }, contextFactory)
+//        {}
+        //===============================================================
+        private bool OwnsContext { get; set; }
+        //===============================================================
+        private TContext Context { get; set; }
         //===============================================================
         public bool LazyLoadingEnabled { get; set; }
         //===============================================================
-        private Func<TContext> ContextFactory { get; set; }
+        public uint InsertBatchSize { get; set; }
         //===============================================================
         private Func<TContext, DbSet<TValue>> SetSelector { get; set; }
         //===============================================================
         private Func<TValue, Object[]> KeySelector { get; set; }
         //===============================================================
-        public int InsertBatchSize { get; set; }
-        //===============================================================
         public void Store(TValue value)
         {
-            using (var c = ContextFactory())
-            {
-                var set = SetSelector(c);
-                set.Add(value);
+            var set = SetSelector(Context);
+            set.Add(value);
 
-                c.SaveChanges();
-            }
+            Context.SaveChanges();
         }
         //===============================================================
         public void Store(IEnumerable<TValue> values)
         {
-            // Batch up the insert into smaller chunks
-            var batches = values.Batch(InsertBatchSize).ToList();
-            Parallel.ForEach(batches, batch =>
-                {
-                    using (var c = ContextFactory())
-                    {
-                        var set = SetSelector(c);
-                        foreach (var x in batch)
-                            set.Add(x);
+            var set = SetSelector(Context);
+            foreach (var x in values)
+                set.Add(x);
 
-                        c.SaveChanges();
-                    }
-                });
+            Context.SaveChanges();
         }
         //===============================================================
         public void Remove(params Object[] keys)
         {
-            using (var c = ContextFactory())
-            {
-                var set = SetSelector(c);
+                var set = SetSelector(Context);
                 var obj = set.Find(keys);
                 set.Remove(obj);
                 
-                c.SaveChanges();
-            }
+                Context.SaveChanges();
         }
         //===============================================================
         public void Remove(IEnumerable<Object[]> keys)
         {
-            using (var c = ContextFactory())
-            {
-                var set = SetSelector(c);
+                var set = SetSelector(Context);
                 foreach (var keySet in keys)
                 {
                     var obj = set.Find(keys);
                     set.Remove(obj);
                 }
 
-                c.SaveChanges();
-            }
+                Context.SaveChanges();
         }
         //===============================================================
         public bool Exists(params Object[] keys)
         {
-            using (var c = ContextFactory())
-            {
-                var set = SetSelector(c);
-                return set.Find(keys) != null;
-            }
+            var set = SetSelector(Context);
+            return set.Find(keys) != null;
         }
         //===============================================================
         public ObjectContext<TValue> Find(params Object[] keys)
         {
-            var c = ContextFactory();
-            var set = SetSelector(c);
-            return new EFObjectContext<TValue>(set.Find(keys), c);
+            var set = SetSelector(Context);
+            return new EFObjectContext<TValue>(set.Find(keys), Context);
         }
         //===============================================================
-        public EnumerableObjectContext<TValue> Items()
+        public EnumerableObjectContext<TValue> Items
         {
-            var context = ContextFactory();
-            return new EFEnumerableObjectContext<TValue>(SetSelector(context), context);
+            get { return new EFEnumerableObjectContext<TValue>(SetSelector(Context), Context); }
         }
         //===============================================================
         public void Update<T>(T value, params Object[] keys)
@@ -168,7 +181,8 @@ namespace Repository.EntityFramework
         /// <filterpriority>2</filterpriority>
         public void Dispose()
         {
-            // EF repository doesn't need to do anything, because it creates contexts for each request.
+            if (OwnsContext)
+                Context.Dispose();
         }
         //===============================================================
     }
@@ -212,7 +226,8 @@ namespace Repository.EntityFramework
         /// <filterpriority>2</filterpriority>
         public override void Dispose()
         {
-            Context.Dispose();
+            // We no longer dispose of the context in each ObjectContext, because it is handled at the Repository level now
+            // Context.Dispose();
         }
         //===============================================================
     }
@@ -232,7 +247,8 @@ namespace Repository.EntityFramework
         //===============================================================
         public override void Dispose()
         {
-            Context.Dispose();
+            // We no longer dispose the context in each ObjectContext, because it is handled at the Repository level now
+            //Context.Dispose();
         }
         //===============================================================
         protected override IQueryable<T> Objects

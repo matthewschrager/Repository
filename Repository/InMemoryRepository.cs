@@ -64,9 +64,9 @@ namespace Repository
             return new InMemoryObjectContext<T>(obj);
         }
         //===============================================================
-        public EnumerableObjectContext<T> Items()
+        public EnumerableObjectContext<T> Items
         {
-            return new InMemoryEnumerableObjectContext<T>(mData.Values.AsQueryable());
+            get { return new InMemoryEnumerableObjectContext<T>(mData.Values.AsQueryable()); }
         }
         //===============================================================
         public void Update<TValue>(TValue value, params Object[] keys)

@@ -31,8 +31,7 @@ namespace Repository
         //===============================================================
         ObjectContext<T> Find(params Object[] keys);
         //===============================================================
-        EnumerableObjectContext<T> Items();
+        EnumerableObjectContext<T> Items { get; }
         //===============================================================
-
     }
 }

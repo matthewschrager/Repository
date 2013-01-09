@@ -175,11 +175,14 @@ namespace Repository.RavenDB
             return new RavenObjectContext<T>(obj, session, x => KeyGenerator(KeySelector(x)));
         }
         //===============================================================
-        public EnumerableObjectContext<T> Items()
+        public EnumerableObjectContext<T> Items
         {
-            var session = DocumentStore.OpenSession();
-            var obj = session.Query<T>();
-            return new RavenEnumerableObjectContext<T>(obj, session);
+            get
+            {
+                var session = DocumentStore.OpenSession();
+                var obj = session.Query<T>();
+                return new RavenEnumerableObjectContext<T>(obj, session);
+            }
         }
         //===============================================================
         public void Update<TValue>(TValue value, params Object[] keys)
