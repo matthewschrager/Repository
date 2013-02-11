@@ -1,11 +1,7 @@
-﻿using System.Dynamic;
-using NUnit.Framework;
-using Repository;
+﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
-namespace Repository.Tests
+namespace Repository.UnitTests
 {
 
 
