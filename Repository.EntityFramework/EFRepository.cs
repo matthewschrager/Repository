@@ -11,10 +11,13 @@ using NUnit.Framework;
 
 namespace Repository.EntityFramework
 {
-    public class EFRepository<TContext, TValue> : IRepository<TValue> where TValue : class where TContext : DbContext
+    public class EFRepository<TContext, TValue> : Repository<TValue> where TValue : class where TContext : DbContext
     {
+        private bool mIsReadOnly;
+
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, TContext context = null)
+            : base(keySelector)
         {
             OwnsContext = false;
 
@@ -30,14 +33,8 @@ namespace Repository.EntityFramework
             }
 
             Context = context;
-            Context.Configuration.LazyLoadingEnabled = true;
             SetSelector = setSelector;
-            KeySelector = keySelector;
-            LazyLoadingEnabled = true;
             InsertBatchSize = 100;
-
-            // Force the model to be created
-            var dummy = SetSelector(Context).Any();
         }
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, TContext context = null)
@@ -50,7 +47,7 @@ namespace Repository.EntityFramework
 //                ContextFactory = () =>
 //                    {
 //                        var c = contextFactory();
-//                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
+//                        c.Configuration.IsReadOnly = IsReadOnly;
 //                        return c;
 //                    };
 //            else
@@ -63,7 +60,7 @@ namespace Repository.EntityFramework
 //                ContextFactory = () =>
 //                    {
 //                        var c = Activator.CreateInstance(typeof(TContext)) as TContext;
-//                        c.Configuration.LazyLoadingEnabled = LazyLoadingEnabled;
+//                        c.Configuration.IsReadOnly = IsReadOnly;
 //                        return c;
 //                    };
 //            }
@@ -71,7 +68,7 @@ namespace Repository.EntityFramework
 //            SetSelector = setSelector;
 //            KeySelector = keySelector;
 //            InsertBatchSize = 100;
-//            LazyLoadingEnabled = true;
+//            IsReadOnly = true;
 //
 //            // For now, we use a single context for the lifespan of this repository
 //            Context = ContextFactory();
@@ -83,17 +80,13 @@ namespace Repository.EntityFramework
         //===============================================================
         private bool OwnsContext { get; set; }
         //===============================================================
-        private TContext Context { get; set; }
-        //===============================================================
-        public bool LazyLoadingEnabled { get; set; }
+        public TContext Context { get; set; }
         //===============================================================
         public uint InsertBatchSize { get; set; }
         //===============================================================
         private Func<TContext, DbSet<TValue>> SetSelector { get; set; }
         //===============================================================
-        private Func<TValue, Object[]> KeySelector { get; set; }
-        //===============================================================
-        public void Store(TValue value)
+        public override void Store(TValue value)
         {
             var set = SetSelector(Context);
             set.Add(value);
@@ -101,54 +94,70 @@ namespace Repository.EntityFramework
             Context.SaveChanges();
         }
         //===============================================================
-        public void Store(IEnumerable<TValue> values)
+        public override void Store(IEnumerable<TValue> values)
+        {
+            var oldValue = Context.Configuration.AutoDetectChangesEnabled;
+            Context.Configuration.AutoDetectChangesEnabled = false;
+
+            var set = SetSelector(Context);
+            foreach (var value in values)
+                set.Add(value);
+
+            Context.ChangeTracker.DetectChanges();
+            Context.SaveChanges();
+
+            Context.Configuration.AutoDetectChangesEnabled = oldValue;
+        }
+        //===============================================================
+        public override void RemoveByKey(params Object[] keys)
         {
             var set = SetSelector(Context);
-            foreach (var x in values)
-                set.Add(x);
+            var obj = set.Find(keys);
+            set.Remove(obj);
 
             Context.SaveChanges();
         }
         //===============================================================
-        public void Remove(params Object[] keys)
+        public void RemoveAll()
         {
-                var set = SetSelector(Context);
-                var obj = set.Find(keys);
-                set.Remove(obj);
-                
-                Context.SaveChanges();
-        }
-        //===============================================================
-        public void Remove(IEnumerable<Object[]> keys)
-        {
-                var set = SetSelector(Context);
-                foreach (var keySet in keys)
-                {
-                    var obj = set.Find(keys);
-                    set.Remove(obj);
-                }
+            var tableName = Context.GetTableName<TValue>();
+            tableName = tableName.Replace("[dbo].", "").Replace("[", "").Replace("]", "");
+            var query = "DELETE FROM " + tableName;
 
-                Context.SaveChanges();
+            var set = SetSelector(Context);
+            Context.Database.ExecuteSqlCommand(query);
         }
         //===============================================================
-        public bool Exists(params Object[] keys)
+        public override void RemoveAllByKey(IEnumerable<Object[]> keys)
+        {
+            var set = SetSelector(Context);
+            foreach (var keySet in keys)
+            {
+                var obj = set.Find(keySet);
+                set.Remove(obj);
+            }
+
+            Context.SaveChanges();
+        }
+        //===============================================================
+        public override bool Exists(params Object[] keys)
         {
             var set = SetSelector(Context);
             return set.Find(keys) != null;
         }
         //===============================================================
-        public ObjectContext<TValue> Find(params Object[] keys)
+        public override ObjectContext<TValue> Find(params Object[] keys)
         {
             var set = SetSelector(Context);
             return new EFObjectContext<TValue>(set.Find(keys), Context);
         }
         //===============================================================
-        public EnumerableObjectContext<TValue> Items
+        public override EnumerableObjectContext<TValue> Items
         {
             get { return new EFEnumerableObjectContext<TValue>(SetSelector(Context), Context); }
         }
         //===============================================================
-        public void Update<T>(T value, params Object[] keys)
+        public override void Update<T>(T value, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -157,7 +166,7 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
+        public override void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -165,12 +174,12 @@ namespace Repository.EntityFramework
             }
         }
         //===============================================================
-        public void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
+        public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
         {
             throw new NotImplementedException();
         }
         //===============================================================
-        public void Update(string json, UpdateType updateType, params object[] keys)
+        public override void Update(string json, UpdateType updateType, params object[] keys)
         {
             throw new NotImplementedException();
         }
@@ -179,7 +188,7 @@ namespace Repository.EntityFramework
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public void Dispose()
+        public override void Dispose()
         {
             if (OwnsContext)
                 Context.Dispose();
@@ -234,10 +243,10 @@ namespace Repository.EntityFramework
 
     public class EFEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
     {
-        private IQueryable<T> mObjects;
+        private DbSet<T> mObjects;
 
         //===============================================================
-        public EFEnumerableObjectContext(IQueryable<T> objects, DbContext context)
+        public EFEnumerableObjectContext(DbSet<T> objects, DbContext context)
         {
             Context = context;
             mObjects = objects;

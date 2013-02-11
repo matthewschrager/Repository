@@ -16,7 +16,7 @@ namespace Repository
         //===============================================================
         public TContext Context { get; private set; }
         //===============================================================
-        public IRepository<T> Add<T>(Func<TContext, IRepository<T>> factory) where T : class
+        public Repository<T> Add<T>(Func<TContext, Repository<T>> factory) where T : class
         {
             return factory(Context);
         }

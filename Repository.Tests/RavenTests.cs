@@ -25,11 +25,11 @@ namespace Repository.UnitTests
             StringKeys = RavenRepository<Repository.StringKeyClass>.FromUrlAndApiKey("https://1.ravenhq.com/databases/AppHarbor_c73ea268-8421-480b-8c4c-517eefb1750a", "e8e26c07-b6d5-4513-a7a6-d26d58ec2d33", x => x.Key);
 
             foreach (var obj in TestClasses.Items)
-                TestClasses.Remove(obj.Key);
+                TestClasses.Remove(obj);
             foreach (var obj in Fixtures.Items)
-                Fixtures.Remove(obj.FixtureID);
+                Fixtures.Remove(obj);
             foreach (var obj in WorkOrders.Items)
-                WorkOrders.Remove(obj.ID);
+                WorkOrders.Remove(obj);
         }
         //===============================================================
         [TearDown]
@@ -117,7 +117,7 @@ namespace Repository.UnitTests
                 Assert.AreEqual(dbObj.Object.ComplexList.First().Value1, 2);
             }
 
-            TestClasses.Remove(obj.Key);
+            TestClasses.Remove(obj);
 
 
             // Fixture
@@ -141,7 +141,7 @@ namespace Repository.UnitTests
                 Assert.AreEqual(dbObj.Object.Data.UnitID, Guid.Parse("c7ed2664-58ca-4324-82c1-96fa54140258"));
             }
 
-            Fixtures.Remove(fixture.FixtureID);
+            Fixtures.Remove(fixture);
 
             // Work orders
             var workOrder = new Repository.WorkOrder();
@@ -158,7 +158,7 @@ namespace Repository.UnitTests
                 Assert.AreEqual(dbObj.Object.Data.Comment, "Test Comment");
             }
 
-            WorkOrders.Remove(workOrder.ID);
+            WorkOrders.Remove(workOrder);
         }
         //===============================================================
         [Test]
@@ -182,7 +182,7 @@ namespace Repository.UnitTests
             // Incorrect data type (list)
             Assert.That(() => TestClasses.Update("{ 'ComplexList': 'blah' }", UpdateType.Set, obj.Key), Throws.Exception);
 
-            TestClasses.Remove(obj.Key);
+            TestClasses.Remove(obj);
 
         }
         //===============================================================
@@ -205,7 +205,7 @@ namespace Repository.UnitTests
             result = WorkOrders.FindFromJSON("{ 'ID': '2f835d08-34c0-406d-8188-0ce5f33325f3' }").ToList();
             Assert.AreEqual(result.Count, 0);
 
-            WorkOrders.Remove(workOrder.ID);
+            WorkOrders.Remove(workOrder);
         }
         //===============================================================
         [Test]
@@ -223,7 +223,7 @@ namespace Repository.UnitTests
                 Assert.AreEqual(newGuid, dbObj.Object.Guid);
             }
 
-            TestClasses.Remove(testObj.Key);
+            TestClasses.Remove(testObj);
 
             // Second level
             var fixture = new Repository.Fixture();
@@ -240,7 +240,7 @@ namespace Repository.UnitTests
                 Assert.AreEqual(newGuid, dbFixture.Object.Data.UnitID);
             }
 
-            Fixtures.Remove(fixture.FixtureID);
+            Fixtures.Remove(fixture);
         }
         //===============================================================
         [Test]
@@ -258,7 +258,7 @@ namespace Repository.UnitTests
                 Assert.IsTrue(list.SequenceEqual(dbObj.Object.IntegerList));
             }
 
-            TestClasses.Remove(obj.Key);
+            TestClasses.Remove(obj);
         }
         //===============================================================
         [Test]

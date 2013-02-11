@@ -8,21 +8,22 @@ using Raven.Abstractions.Commands;
 using Raven.Abstractions.Data;
 using Raven.Client;
 using Raven.Client.Document;
+using Raven.Client.Linq;
 using Raven.Imports.Newtonsoft.Json;
 using Raven.Imports.Newtonsoft.Json.Linq;
 using Raven.Json.Linq;
 
 namespace Repository.RavenDB
 {
-    public class RavenRepository<T> : IDisposable, IRepository<T> where T : class
+    public class RavenRepository<T> : Repository<T> where T : class
     {
         //===============================================================
         private RavenRepository(DocumentStore documentStore, Func<T, Object[]> keySelector, String collectionName = null)
+            : base(keySelector)
         {
             PageSize = 1024;
             TimeoutInMilliseconds = 5000;
             DocumentStore = documentStore;
-            KeySelector = keySelector;
             ManualCollectionName = collectionName;
             DocumentStore.Conventions.DocumentKeyGenerator = (c, o) => KeyGenerator(KeySelector(o as T));
             DocumentStore.Conventions.FindTypeTagName = t => ManualCollectionName ?? DocumentConvention.DefaultTypeTagName(t); 
@@ -77,9 +78,7 @@ namespace Repository.RavenDB
         //===============================================================
         public DocumentStore DocumentStore { get; set; }
         //===============================================================
-        private Func<T, Object[]> KeySelector { get; set; }
-        //===============================================================
-        public void Store(T value)
+        public override void Store(T value)
         {
             try
             {
@@ -107,7 +106,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void Store(IEnumerable<T> values)
+        public override void Store(IEnumerable<T> values)
         {
             try
             {
@@ -139,7 +138,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void Remove(params object[] keys)
+        public override void RemoveByKey(params object[] keys)
         {
             using (var session = DocumentStore.OpenSession())
             {
@@ -148,7 +147,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void Remove(IEnumerable<Object[]> keys)
+        public override void RemoveAllByKey(IEnumerable<Object[]> keys)
         {
             using (var session = DocumentStore.OpenSession())
             {
@@ -159,7 +158,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public bool Exists(params Object[] keys)
+        public override bool Exists(params Object[] keys)
         {
             using (var session = DocumentStore.OpenSession())
             {
@@ -168,14 +167,14 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public ObjectContext<T> Find(params object[] keys)
+        public override ObjectContext<T> Find(params object[] keys)
         {
             var session = DocumentStore.OpenSession();
             var obj = session.Load<T>(KeyGenerator(keys));
             return new RavenObjectContext<T>(obj, session, x => KeyGenerator(KeySelector(x)));
         }
         //===============================================================
-        public EnumerableObjectContext<T> Items
+        public override EnumerableObjectContext<T> Items
         {
             get
             {
@@ -185,7 +184,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void Update<TValue>(TValue value, params Object[] keys)
+        public override void Update<TValue>(TValue value, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -194,7 +193,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
+        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
         {
             using (var obj = Find(keys))
             {
@@ -203,7 +202,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void Update(String json, UpdateType updateType, params Object[] keys)
+        public override void Update(String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
@@ -211,7 +210,7 @@ namespace Repository.RavenDB
             }
         }
         //===============================================================
-        public void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys)
+        public override void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys)
         {
             using (var obj = Find(keys) as RavenObjectContext<T>)
             {
@@ -271,7 +270,7 @@ namespace Repository.RavenDB
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         /// <filterpriority>2</filterpriority>
-        public void Dispose()
+        public override void Dispose()
         {
             DocumentStore.Dispose();
         }
@@ -483,10 +482,10 @@ namespace Repository.RavenDB
 
     public class RavenEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
     {
-        private IQueryable<T> mObjects;
+        private IRavenQueryable<T> mObjects;
 
         //===============================================================
-        public RavenEnumerableObjectContext(IQueryable<T> objects, IDocumentSession session)
+        public RavenEnumerableObjectContext(IRavenQueryable<T> objects, IDocumentSession session)
         {
             mObjects = objects;
             Session = session;

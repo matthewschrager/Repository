@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using NUnit.Framework;
 using Raven.Imports.Newtonsoft.Json;
 using Repository.RavenDB;
 using System;
 
-namespace Repository.Tests
+namespace Repository.UnitTests
 {
     [TestFixture]
     class RavenTests

@@ -25,6 +25,8 @@ namespace Repository
 
     public abstract class EnumerableObjectContext<T> : IDisposable, IQueryable<T> where T : class
     {
+        private IQueryProvider mCachedQueryProvider = null;
+
         //===============================================================
         protected abstract IQueryable<T> Objects { get; }
         //===============================================================
@@ -42,6 +44,11 @@ namespace Repository
             return GetEnumerator();
         }
         //===============================================================
+        public TQueryable AsRaw<TQueryable>() where TQueryable : class
+        {
+            return Objects as TQueryable;
+        }
+        //===============================================================
         public Expression Expression 
         {
             get { return Objects.Expression; }
@@ -54,7 +61,13 @@ namespace Repository
         //===============================================================
         public IQueryProvider Provider
         {
-            get { return Objects.Provider; }
+            get
+            {
+                if (mCachedQueryProvider == null)
+                    mCachedQueryProvider = Objects.Provider;
+
+                return mCachedQueryProvider;
+            }
         }
         //===============================================================
     }

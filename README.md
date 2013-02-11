@@ -1,15 +1,15 @@
 Repository
 =============
 
-Repository is a generic implementation of the Repository pattern in C#. It provides a repository interface ```IRepository<T>``` that exposes functions to store/retrieve data,
-and an object context interface ```IObjectContext<T>``` that enables manipulation of data once it's retrieved. It also exposes a ```GetItemsContext``` method that returns
+Repository is a generic implementation of the Repository pattern in C#. It provides a repository base class ```Repository<T>``` that exposes functions to store/retrieve data,
+and an object context base class ```ObjectContext<T>``` that enables manipulation of data once it's retrieved. It also exposes an ```Items``` property that returns 
 an ```IQueryable<T>``` which can be used to perform LINQ queries on the repository.
 
 Implementations
 ================
 
 This (code) repository comes with a few Repository implementations. The first and simplest is ```InMemoryRepository```, which acts as a temporary in-memory store useful mainly for testing. The second is
-an Entity Framework repository named ```EFRepository```, which uses [Entity Framework](http://msdn.microsoft.com/en-us/data/ef.aspx) as its storage interface. The last (and most extensively developed) is ```RavenRepository```, 
+an Entity Framework repository named ```EFRepository```, which uses [Entity Framework](http://msdn.microsoft.com/en-us/data/ef.aspx) as its storage interface. The last is ```RavenRepository```, 
 a [RavenDB](http://ravendb.net/) implementation.
 
 Pull requests for additional implementations (and improvements to existing ones) are welcome and encouraged.
@@ -60,11 +60,10 @@ class MyClass
 
 /* ... */
 
-var repository = new MyConcreteRepository<MyClass>();
-using (var itemsContext = repository.GetItemsContext())
+using (var repository = new MyConcreteRepository<MyClass>())
 {
 	// Query objects based on their Value field
-	var filteredItems = itemsContext.Objects.Where(x => x.Value > 5);
+	var filteredItems = repository.Items.Where(x => x.Value > 5);
 
 	// Do stuff with query result
 }
@@ -83,7 +82,12 @@ class MyClass
 /* ... */
 
 var repository = new MyConcreteRepository<MyClass>();
-repository.Remove("myKey");
+repository.RemoveByKey("myKey");
+
+// Or...
+
+var obj = new MyClass { Key = "myKey" };
+repository.Remove(obj);
 ```
 
 Modify a stored object:
