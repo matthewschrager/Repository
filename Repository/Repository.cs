@@ -31,6 +31,11 @@ namespace Repository
             RemoveByKey(KeySelector(obj));
         }
         //===============================================================
+        public void RemoveAll()
+        {
+            RemoveAll(Items);
+        }
+        //===============================================================
         public void RemoveAll(IEnumerable<T> objects)
         {
             RemoveAllByKey(objects.Select(x => KeySelector(x)));

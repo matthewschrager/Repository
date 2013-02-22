@@ -80,5 +80,41 @@ namespace Repository.EntityFramework
                 Assert.IsTrue(!repo.Items.Any());
             }
         }
+        //===============================================================
+        [Test]
+        public void BatchInsertTest()
+        {
+            if (ConfigurationManager.AppSettings["Environment"] == "Test")
+                Assert.Ignore("Skipped on AppHarbor");
+
+            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            {
+                repo.RemoveAllByKey(repo.Items.ToList().Select(x => new object[] { x.ID }));
+                var objects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x.ToString(), Value = x.ToString() }).ToList();
+                repo.Store(objects);
+                repo.RemoveAll(objects);
+            }
+        }
+        //===============================================================
+        [Test]
+        public void SaveItemsChangesTest()
+        {
+            if (ConfigurationManager.AppSettings["Environment"] == "Test")
+                Assert.Ignore("Skipped on AppHarbor");
+
+            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            {
+                var objects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x.ToString(), Value = x.ToString() }).ToList();
+                repo.Store(objects);
+
+                var items = repo.Items.ToList();
+                items.ForEach(x => x.Value = "MODIFIED");
+                repo.Items.SaveChanges();
+
+                items = repo.Items.ToList();
+                Assert.IsTrue(items.All(x => x.Value == "MODIFIED"));
+            }
+        }
+        //===============================================================
     }
 }
