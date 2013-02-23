@@ -41,11 +41,9 @@ class MyClass
 
 /* ... */
 
-var repository = new MyConcreteRepository<MyClass>();
-
-// Objects are returned inside of their own ObjectContexts, which should be disposed
-using (var valueContext = repository.Find("myKey"))
-{ 
+using (var repository = new MyConcreteRepository<MyClass>())
+{
+	var valueContext = repository.Find("myKey"))
 	var value = valueContext.Object;
 
 	// Do cool things with this value
@@ -85,29 +83,31 @@ class MyClass
 
 /* ... */
 
-var repository = new MyConcreteRepository<MyClass>();
-repository.RemoveByKey("myKey");
-repository.SaveChanges();
+using (var repository = new MyConcreteRepository<MyClass>())
+{
+	repository.RemoveByKey("myKey");
+	repository.SaveChanges();
 
-// Or...
+	// Or...
 
-var obj = new MyClass { Key = "myKey" };
-repository.Remove(obj);
-repository.SaveChanges();
+	var obj = new MyClass { Key = "myKey" };
+	repository.Remove(obj);
+	repository.SaveChanges();
 
-// Or...
+	// Or...
 
-repository.RemoveByKey("myKey");
-repository.SaveChanges();
+	repository.RemoveByKey("myKey");
+	repository.SaveChanges();
 
-// Or...
+	// Or...
 
-repository.RemoveAllByKey("myKey");
-repository.SaveChanges();
+	repository.RemoveAllByKey("myKey");
+	repository.SaveChanges();
 
-// Or...
-repository.RemoveAll();
-repository.SaveChanges();
+	// Or...
+	repository.RemoveAll();
+	repository.SaveChanges();
+}
 ```
 
 Modify a stored object:
@@ -123,14 +123,16 @@ class MyClass
 /* ... */
 
 // Pull the object from the repository
-var repository = new MyConcreteRepository<MyClass>();
-using (var valueContext = repository.Find("myKey"))
+using (var repository = new MyConcreteRepository<MyClass>())
 {
+	// Pull the object from the repository
+	var valueContext = repository.Find("myKey");
+
 	// Modify it
 	valueContext.Object.Value = 5;
 
 	// Save the changes
-	valueContext.SaveChanges();
+	repository.SaveChanges();
 }
 ```
 
