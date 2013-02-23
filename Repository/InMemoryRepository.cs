@@ -8,27 +8,86 @@ using NUnit.Framework;
 
 namespace Repository
 {
+    internal class InMemoryInsert<TValue> : Insert<TValue>
+    {
+        //===============================================================
+        public InMemoryInsert(IEnumerable<String> keys, TValue value, IDictionary<String, TValue> dictionary)
+            : base(keys, value)
+        {
+            Dictionary = dictionary;
+        }
+        //===============================================================
+        private IDictionary<String, TValue> Dictionary { get; set; }
+        //===============================================================
+        public override void Apply()
+        {
+            Dictionary[Keys.First() as String] = Value;
+        }
+        //===============================================================
+    }
+
+    internal class InMemoryRemove<TKey, TValue> : Remove
+    {
+        //==============================================================='
+        public InMemoryRemove(IEnumerable<String> keys, IDictionary<String, TValue> dictionary)
+            : base(keys)
+        {
+            Dictionary = dictionary;
+        }
+        //===============================================================
+        private IDictionary<String, TValue> Dictionary { get; set; }
+        //===============================================================
+        public override void Apply()
+        {
+            if (Dictionary.ContainsKey(Keys.First() as String))
+                Dictionary.Remove(Keys.First() as String);
+        }
+        //===============================================================
+    }
+
+    internal class InMemoryModify : Modify
+    {
+        //===============================================================
+        public InMemoryModify(Action change)
+            : base(change)
+        {}
+        //===============================================================
+        public override void Apply()
+        {
+            Change();
+        }
+        //===============================================================
+    }
+
     public class InMemoryRepository<T> : Repository<T> where T : class
     {
         private ConcurrentDictionary<String, T> mData = new ConcurrentDictionary<string, T>();
+        private IList<IPendingChange> mPendingChanges = new List<IPendingChange>();
 
         //===============================================================
         public InMemoryRepository(Func<T, Object> keySelector)
             : base(x => new object[] { keySelector(x) })
         {}
         //===============================================================
-        public override void Store(T value)
+        public override void SaveChanges()
         {
-            mData[KeySelector(value).ToString()] = value;
+            foreach (var change in mPendingChanges)
+                change.Apply();
+
+            mPendingChanges.Clear();
+        }
+        //===============================================================
+        public override void Insert(T value)
+        {
+            mPendingChanges.Add(new InMemoryInsert<T>(KeySelector(value).Select(x => x.ToString()), value, mData));
         }
         //===============================================================
         public override void RemoveByKey(Object[] keys)
         {
             if (keys.Length > 1)
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
-            
-            T removedObj = null;
-            mData.TryRemove(keys.First().ToString(), out removedObj);
+
+            mPendingChanges.Add(new InMemoryRemove<String, T>(keys.Select(x => x.ToString()), mData));
         }
         //===============================================================
         public override bool Exists(params Object[] keys)
@@ -56,20 +115,20 @@ namespace Repository
         //===============================================================
         public override void Update<TValue>(TValue value, params Object[] keys)
         {
-            using (var obj = Find(keys))
-            {
-                obj.Update(value);
-                obj.SaveChanges();
-            }
+            if (keys.Length > 1)
+                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
+
+            var existingValue = mData[keys.First().ToString()];
+            mPendingChanges.Add(new InMemoryModify(() => AutoMapper.Mapper.DynamicMap(value, existingValue)));
         }
         //===============================================================
         public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
         {
-            using (var obj = Find(keys))
-            {
-                obj.Update(value, getter);
-                obj.SaveChanges();
-            }
+            if (keys.Length > 1)
+                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
+
+            var existingValue = mData[keys.First().ToString()];
+            mPendingChanges.Add(new InMemoryModify(() => AutoMapper.Mapper.DynamicMap(value, getter(existingValue))));
         }
         //===============================================================
         public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
@@ -103,23 +162,9 @@ namespace Repository
             mObject = value;
         }
         //===============================================================
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        /// <filterpriority>2</filterpriority>
-        public override void Dispose()
-        {
-            // Do nothing, since in memory objects are automatically disposed
-        }
-        //===============================================================
         public override T Object
         {
             get { return mObject; }
-        }
-        //===============================================================
-        public override void SaveChanges()
-        {
-            // Do nothing - stuff is automatically saved.
         }
         //===============================================================
         public override void Update<TValue>(TValue value)
@@ -144,19 +189,36 @@ namespace Repository
             mObjects = objects;
         }
         //===============================================================
-        public override void Dispose()
-        {
-            // Do nothing, since in-memory objects are automatically disposed
-        }
-        //===============================================================
         protected override IQueryable<T> Objects
         {
             get { return mObjects; }
         }
         //===============================================================
-        public override void SaveChanges()
+    }
+
+    internal class InMemoryRepositoryTests
+    {
+        //===============================================================
+        [Test]
+        public void UpdateTest()
         {
-            // Do nothing, since in-memory takes care of it
+            var repository = new InMemoryRepository<TestClass>(x => x.Key);
+            repository.Insert(new TestClass());
+            repository.SaveChanges();
+
+            repository.Update(new { Value2 = DateTime.MaxValue }, 1);
+            repository.SaveChanges();
+
+            var val = repository.Find(1).Object;
+            Assert.AreEqual(val.Value2, DateTime.MaxValue);
+
+            var obj = new { Value2 = DateTime.MaxValue };
+            repository.Update(obj, x => x.Property, 1);
+            repository.SaveChanges();
+
+            Assert.AreEqual(val.Property.Value2, DateTime.MaxValue);
+            Assert.AreEqual(val.Property.Value1.Value, 1);
+
         }
         //===============================================================
     }

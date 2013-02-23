@@ -8,31 +8,23 @@ using System.Text;
 
 namespace Repository
 {
-    public abstract class ObjectContext<T> : IDisposable where T : class
+    public abstract class ObjectContext<T> where T : class
     {
         //===============================================================
         public abstract T Object { get; }
-        //===============================================================
-        public abstract void SaveChanges();
         //===============================================================
         public abstract void Update<TValue>(TValue value);
         //===============================================================
         public abstract void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter);
         //===============================================================
-        public abstract void Dispose();
-        //===============================================================
     }
 
-    public abstract class EnumerableObjectContext<T> : IDisposable, IQueryable<T> where T : class
+    public abstract class EnumerableObjectContext<T> : IQueryable<T> where T : class
     {
         private IQueryProvider mCachedQueryProvider = null;
 
         //===============================================================
         protected abstract IQueryable<T> Objects { get; }
-        //===============================================================
-        public abstract void SaveChanges();
-        //===============================================================
-        public abstract void Dispose();
         //===============================================================
         public IEnumerator<T> GetEnumerator()
         {

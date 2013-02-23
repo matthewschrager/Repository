@@ -18,12 +18,12 @@ namespace Repository
         //===============================================================
         protected Func<T, Object[]> KeySelector { get; private set; }
         //===============================================================
-        public abstract void Store(T value);
+        public abstract void Insert(T value);
         //===============================================================
-        public virtual void Store(IEnumerable<T> values)
+        public virtual void Insert(IEnumerable<T> values)
         {
             foreach (var value in values)
-                Store(value);
+                Insert(value);
         }
         //===============================================================
         public void Remove(T obj)
@@ -60,6 +60,8 @@ namespace Repository
         public abstract void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys);
         //===============================================================
         public abstract ObjectContext<T> Find(params Object[] keys);
+        //===============================================================
+        public abstract void SaveChanges();
         //===============================================================
         public abstract EnumerableObjectContext<T> Items { get; }
         //===============================================================

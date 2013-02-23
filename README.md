@@ -23,7 +23,11 @@ Store an object:
 ```C#
 var repository = new MyConcreteRepository<int>();
 repository.Store(1); // Store a single value
-repository.Store(new[] { 1, 2, 3, 4, 5 }); // Store a bunch of values
+repository.SaveChanges();
+
+
+repository.Store(new[] { 2, 3, 4, 5 }); // Store a bunch of values
+repository.SaveChanges();
 ```
 
 Retrieve an object:
@@ -83,11 +87,27 @@ class MyClass
 
 var repository = new MyConcreteRepository<MyClass>();
 repository.RemoveByKey("myKey");
+repository.SaveChanges();
 
 // Or...
 
 var obj = new MyClass { Key = "myKey" };
 repository.Remove(obj);
+repository.SaveChanges();
+
+// Or...
+
+repository.RemoveByKey("myKey");
+repository.SaveChanges();
+
+// Or...
+
+repository.RemoveAllByKey("myKey");
+repository.SaveChanges();
+
+// Or...
+repository.RemoveAll();
+repository.SaveChanges();
 ```
 
 Modify a stored object:

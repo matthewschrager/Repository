@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Helpers.cs" />
     <Compile Include="InMemoryRepository.cs" />
+    <Compile Include="IPendingChange.cs" />
     <Compile Include="Repository.cs" />
     <Compile Include="ObjectContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

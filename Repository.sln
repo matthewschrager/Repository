@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository", "Repository\Repository.csproj", "{3F3C814E-62AD-4065-8E75-068607D5BB69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository.RavenDB", "Repository.RavenDB\Repository.RavenDB.csproj", "{29D9D06F-24BA-4C7B-8CAE-79058C0E447E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository.EntityFramework", "Repository.EntityFramework\Repository.EntityFramework.csproj", "{E6875049-BE49-44B0-9A4B-6B3571375CC6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E35D9F0-05CE-4387-8E74-BA1EA7C89588}"
@@ -32,10 +30,6 @@ Global
 		{3F3C814E-62AD-4065-8E75-068607D5BB69}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F3C814E-62AD-4065-8E75-068607D5BB69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F3C814E-62AD-4065-8E75-068607D5BB69}.Release|Any CPU.Build.0 = Release|Any CPU
-		{29D9D06F-24BA-4C7B-8CAE-79058C0E447E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{29D9D06F-24BA-4C7B-8CAE-79058C0E447E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{29D9D06F-24BA-4C7B-8CAE-79058C0E447E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{29D9D06F-24BA-4C7B-8CAE-79058C0E447E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E6875049-BE49-44B0-9A4B-6B3571375CC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E6875049-BE49-44B0-9A4B-6B3571375CC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6875049-BE49-44B0-9A4B-6B3571375CC6}.Release|Any CPU.ActiveCfg = Release|Any CPU

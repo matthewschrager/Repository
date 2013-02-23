@@ -53,12 +53,16 @@ namespace Repository.EntityFramework
             using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
             {
                 repo.RemoveAll(repo.Items);
-                repo.Store(mTestObjects);
+                repo.Insert(mTestObjects);
+                repo.SaveChanges();
 
                 var storedObjects = repo.Items.ToList();
                 Assert.IsTrue(storedObjects.All(x => mTestObjects.Exists(y => y.ID == x.ID)));
 
                 repo.RemoveAll(repo.Items);
+                Assert.IsTrue(repo.Items.Any());
+
+                repo.SaveChanges();
                 
                 storedObjects = repo.Items.ToList();
                 Assert.IsTrue(!storedObjects.Any());
@@ -74,9 +78,50 @@ namespace Repository.EntityFramework
             using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
             {
                 repo.RemoveAll(repo.Items);
-                repo.Store(mTestObjects);
+                repo.SaveChanges();
+                Assert.IsTrue(!repo.Items.Any());
 
+
+                repo.Insert(mTestObjects);
+                repo.SaveChanges();
+                Assert.IsTrue(repo.Items.Any());
+
+                // Remove all batch
                 repo.RemoveAll();
+                repo.SaveChanges();
+                Assert.IsTrue(!repo.Items.Any());
+
+                // Remove all without saving in between
+                repo.Insert(mTestObjects);
+                repo.RemoveAll();
+                repo.SaveChanges();
+                Assert.IsTrue(!repo.Items.Any());
+
+                // Remove all with inserts before and after
+                repo.Insert(mTestObjects);
+                repo.RemoveAll();
+                repo.Insert(mTestObjects);
+                repo.RemoveAll();
+                repo.SaveChanges();
+                Assert.IsTrue(!repo.Items.Any());
+
+
+                repo.Insert(mTestObjects);
+                repo.SaveChanges();
+
+                // Remove all by key
+                repo.RemoveAllByKey(repo.Items.ToList().Select(x => new object[] { x.ID }));
+                repo.SaveChanges();
+
+                Assert.IsTrue(!repo.Items.Any());
+
+                // Remove all by object
+                repo.Insert(mTestObjects);
+                repo.SaveChanges();
+
+                repo.RemoveAll(mTestObjects);
+                repo.SaveChanges();
+
                 Assert.IsTrue(!repo.Items.Any());
             }
         }
@@ -90,8 +135,10 @@ namespace Repository.EntityFramework
             using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
             {
                 repo.RemoveAllByKey(repo.Items.ToList().Select(x => new object[] { x.ID }));
+
+
                 var objects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x.ToString(), Value = x.ToString() }).ToList();
-                repo.Store(objects);
+                repo.Insert(objects);
                 repo.RemoveAll(objects);
             }
         }
@@ -104,12 +151,16 @@ namespace Repository.EntityFramework
 
             using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
             {
+                repo.RemoveAll();
+                repo.SaveChanges();
+
                 var objects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x.ToString(), Value = x.ToString() }).ToList();
-                repo.Store(objects);
+                repo.Insert(objects);
+                repo.SaveChanges();
 
                 var items = repo.Items.ToList();
                 items.ForEach(x => x.Value = "MODIFIED");
-                repo.Items.SaveChanges();
+                repo.SaveChanges();
 
                 items = repo.Items.ToList();
                 Assert.IsTrue(items.All(x => x.Value == "MODIFIED"));

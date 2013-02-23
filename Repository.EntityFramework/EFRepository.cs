@@ -11,9 +11,71 @@ using NUnit.Framework;
 
 namespace Repository.EntityFramework
 {
+    internal class EFInsert<TValue> : Insert<TValue> where TValue : class
+    {
+        //===============================================================
+        public EFInsert(IEnumerable<Object> keys, TValue value, DbSet<TValue> set)
+            : base(keys, value)
+        {
+            DbSet = set;
+        }
+        //===============================================================
+        private DbSet<TValue> DbSet { get; set; }
+        //===============================================================
+        public override void Apply()
+        {
+            DbSet.Add(Value);
+        }
+        //===============================================================
+    }
+
+    internal class EFRemove<TValue> : Remove where TValue : class
+    {
+        //===============================================================
+        public EFRemove(IEnumerable<Object> keys, DbSet<TValue> dbSet)
+            : base(keys)
+        {
+            DbSet = dbSet;
+        }
+        //===============================================================
+        private DbSet<TValue> DbSet { get; set; }
+        //===============================================================
+        public override void Apply()
+        {
+            var obj = DbSet.Find(Keys.ToArray());
+            DbSet.Remove(obj);
+        }
+        //===============================================================
+    }
+
+    internal class EFRemoveAll<TValue, TContext> : IPendingChange where TContext : DbContext where TValue : class
+    {
+        //===============================================================
+        public EFRemoveAll(TContext context)
+        {
+            Context = context;
+        }
+        //===============================================================
+        private TContext Context { get; set; }
+        //===============================================================
+        public void Apply()
+        {
+            var tableName = Context.GetTableName<TValue>();
+            tableName = tableName.Replace("[dbo].", "").Replace("[", "").Replace("]", "");
+            var query = "DELETE FROM " + tableName;
+
+            Context.Database.ExecuteSqlCommand(query);
+        }
+        //===============================================================
+    }
+
+
     public class EFRepository<TContext, TValue> : Repository<TValue> where TValue : class where TContext : DbContext
     {
-        private bool mIsReadOnly;
+        // We have to keep track of pending changes manually because RemoveAll is done via a straight SQL command, which will
+        // execute immediately. Since the semantics of Repository are such that nothing is committed until SaveChanges is called, we have to
+        // keep track of all changes manually and apply them on SaveChanges
+        private List<IPendingChange> mPendingChanges = new List<IPendingChange>();
 
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, TContext context = null)
@@ -41,43 +103,6 @@ namespace Repository.EntityFramework
             : this(setSelector, x => new[] { keySelector(x) }, context)
         { }
         //===============================================================
-//        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, Func<TContext> contextFactory = null)
-//        {
-//            if (contextFactory != null)
-//                ContextFactory = () =>
-//                    {
-//                        var c = contextFactory();
-//                        c.Configuration.IsReadOnly = IsReadOnly;
-//                        return c;
-//                    };
-//            else
-//            {
-//                // Find a parameterless constructor. If none exists, throw an exception that lets the user know he must provide a factory that handles constructor parameters
-//                var parameterlessConstructor = typeof(TContext).GetConstructor(new Type[] { });
-//                if (parameterlessConstructor == null)
-//                    throw new ArgumentException("A default context factory can only be created if the context type (TContext) has a parameterless constructor.");
-//
-//                ContextFactory = () =>
-//                    {
-//                        var c = Activator.CreateInstance(typeof(TContext)) as TContext;
-//                        c.Configuration.IsReadOnly = IsReadOnly;
-//                        return c;
-//                    };
-//            }
-//
-//            SetSelector = setSelector;
-//            KeySelector = keySelector;
-//            InsertBatchSize = 100;
-//            IsReadOnly = true;
-//
-//            // For now, we use a single context for the lifespan of this repository
-//            Context = ContextFactory();
-//        }
-        //===============================================================
-//        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, Func<TContext> contextFactory = null)
-//            : this(setSelector, x => new[] { keySelector(x) }, contextFactory)
-//        {}
-        //===============================================================
         private bool OwnsContext { get; set; }
         //===============================================================
         public TContext Context { get; set; }
@@ -86,58 +111,52 @@ namespace Repository.EntityFramework
         //===============================================================
         private Func<TContext, DbSet<TValue>> SetSelector { get; set; }
         //===============================================================
-        public override void Store(TValue value)
+        public override void SaveChanges()
         {
-            var set = SetSelector(Context);
-            set.Add(value);
+            foreach (var change in mPendingChanges)
+                change.Apply();
 
             Context.SaveChanges();
+            mPendingChanges.Clear();
         }
         //===============================================================
-        public override void Store(IEnumerable<TValue> values)
+        public override void Insert(TValue value)
         {
-            var oldValue = Context.Configuration.AutoDetectChangesEnabled;
-            Context.Configuration.AutoDetectChangesEnabled = false;
-
-            var set = SetSelector(Context);
-            foreach (var value in values)
-                set.Add(value);
-
-            Context.ChangeTracker.DetectChanges();
-            Context.SaveChanges();
-
-            Context.Configuration.AutoDetectChangesEnabled = oldValue;
+            mPendingChanges.Add(new EFInsert<TValue>(KeySelector(value), value, SetSelector(Context)));
+        }
+        //===============================================================
+        public override void Insert(IEnumerable<TValue> values)
+        {
+            foreach (var x in values)
+                Insert(x);
+//            var oldValue = Context.Configuration.AutoDetectChangesEnabled;
+//            Context.Configuration.AutoDetectChangesEnabled = false;
+//
+//            var set = SetSelector(Context);
+//            foreach (var value in values)
+//                set.Add(value);
+//
+//            Context.ChangeTracker.DetectChanges();
+//            Context.Configuration.AutoDetectChangesEnabled = oldValue;
         }
         //===============================================================
         public override void RemoveByKey(params Object[] keys)
         {
-            var set = SetSelector(Context);
-            var obj = set.Find(keys);
-            set.Remove(obj);
-
-            Context.SaveChanges();
+            mPendingChanges.Add(new EFRemove<TValue>(keys, SetSelector(Context)));
         }
         //===============================================================
         public void RemoveAll()
         {
-            var tableName = Context.GetTableName<TValue>();
-            tableName = tableName.Replace("[dbo].", "").Replace("[", "").Replace("]", "");
-            var query = "DELETE FROM " + tableName;
-
-            var set = SetSelector(Context);
-            Context.Database.ExecuteSqlCommand(query);
+            // Since RemoveAll works differently than the other changes, we have to manually remove any inserts which
+            // haven't yet been saved
+            mPendingChanges.RemoveAll(x => x is EFInsert<TValue>);
+            mPendingChanges.Add(new EFRemoveAll<TValue, TContext>(Context));
         }
         //===============================================================
         public override void RemoveAllByKey(IEnumerable<Object[]> keys)
         {
-            var set = SetSelector(Context);
-            foreach (var keySet in keys)
-            {
-                var obj = set.Find(keySet);
-                set.Remove(obj);
-            }
-
-            Context.SaveChanges();
+            foreach (var x in keys)
+                mPendingChanges.Add(new EFRemove<TValue>(x, SetSelector(Context)));
         }
         //===============================================================
         public override bool Exists(params Object[] keys)
@@ -149,29 +168,24 @@ namespace Repository.EntityFramework
         public override ObjectContext<TValue> Find(params Object[] keys)
         {
             var set = SetSelector(Context);
-            return new EFObjectContext<TValue>(set.Find(keys), Context);
+            return new EFObjectContext<TValue>(set.Find(keys));
         }
         //===============================================================
         public override EnumerableObjectContext<TValue> Items
         {
-            get { return new EFEnumerableObjectContext<TValue>(SetSelector(Context), Context); }
+            get { return new EFEnumerableObjectContext<TValue>(SetSelector(Context)); }
         }
         //===============================================================
         public override void Update<T>(T value, params Object[] keys)
         {
-            using (var obj = Find(keys))
-            {
-                obj.Update(value);
-                obj.SaveChanges();
-            }
+            var obj = Find(keys);
+            obj.Update(value);
         }
         //===============================================================
         public override void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
         {
-            using (var obj = Find(keys))
-            {
-                obj.Update(value, getter);
-            }
+            var obj = Find(keys);
+            obj.Update(value, getter);
         }
         //===============================================================
         public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
@@ -201,22 +215,14 @@ namespace Repository.EntityFramework
         private T mObject;
 
         //===============================================================
-        public EFObjectContext(T value, DbContext context)
+        public EFObjectContext(T value)
         {
             mObject = value;
-            Context = context;
         }
         //===============================================================
         public override T Object
         {
             get { return mObject; }
-        }
-        //===============================================================
-        private DbContext Context { get; set; }
-        //===============================================================
-        public override void SaveChanges()
-        {
-            Context.SaveChanges();
         }
         //===============================================================
         public override void Update<TValue>(TValue value)
@@ -229,16 +235,6 @@ namespace Repository.EntityFramework
             AutoMapper.Mapper.DynamicMap(value, getter(Object));
         }
         //===============================================================
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        /// <filterpriority>2</filterpriority>
-        public override void Dispose()
-        {
-            // We no longer dispose of the context in each ObjectContext, because it is handled at the Repository level now
-            // Context.Dispose();
-        }
-        //===============================================================
     }
 
     public class EFEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
@@ -246,28 +242,14 @@ namespace Repository.EntityFramework
         private DbSet<T> mObjects;
 
         //===============================================================
-        public EFEnumerableObjectContext(DbSet<T> objects, DbContext context)
+        public EFEnumerableObjectContext(DbSet<T> objects)
         {
-            Context = context;
             mObjects = objects;
-        }
-        //===============================================================
-        private DbContext Context { get; set; }
-        //===============================================================
-        public override void Dispose()
-        {
-            // We no longer dispose the context in each ObjectContext, because it is handled at the Repository level now
-            //Context.Dispose();
         }
         //===============================================================
         protected override IQueryable<T> Objects
         {
             get { return mObjects; }
-        }
-        //===============================================================
-        public override void SaveChanges()
-        {
-            Context.SaveChanges();
         }
         //===============================================================
     }

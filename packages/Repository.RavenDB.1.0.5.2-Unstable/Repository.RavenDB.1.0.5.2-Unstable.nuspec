@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
   <metadata>
     <id>Repository.RavenDB</id>
-    <version>1.0.5.1-Unstable</version>
+    <version>1.0.5.2-Unstable</version>
     <title>Repository.RavenDB</title>
     <authors>Matthew Schrager</authors>
     <owners>Matthew Schrager</owners>
