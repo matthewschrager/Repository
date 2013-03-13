@@ -159,7 +159,7 @@ namespace Repository.EntityFramework
                 mPendingChanges.Add(new EFRemove<TValue>(x, SetSelector(Context)));
         }
         //===============================================================
-        public override bool Exists(params Object[] keys)
+        public override bool ExistsByKey(params Object[] keys)
         {
             var set = SetSelector(Context);
             return set.Find(keys) != null;

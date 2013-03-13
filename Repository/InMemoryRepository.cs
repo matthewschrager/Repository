@@ -90,7 +90,7 @@ namespace Repository
             mPendingChanges.Add(new InMemoryRemove<String, T>(keys.Select(x => x.ToString()), mData));
         }
         //===============================================================
-        public override bool Exists(params Object[] keys)
+        public override bool ExistsByKey(params Object[] keys)
         {
             if (keys.Length > 1)
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");

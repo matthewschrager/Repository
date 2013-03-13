@@ -53,11 +53,11 @@ namespace Repository
         //===============================================================
         public abstract void SaveChanges();
         //===============================================================
-        public abstract bool Exists(params Object[] keys);
+        public abstract bool ExistsByKey(params Object[] keys);
         //===============================================================
         public bool Exists(T obj)
         {
-            return Exists(KeySelector(obj));
+            return ExistsByKey(KeySelector(obj));
         }
         //===============================================================
         public abstract void Update<TValue>(TValue value, params Object[] keys);

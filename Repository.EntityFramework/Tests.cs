@@ -169,6 +169,27 @@ namespace Repository.EntityFramework
         }
         //===============================================================
         [Test]
+        public void ExistsWorks()
+        {
+            if (ConfigurationManager.AppSettings["Environment"] == "Test")
+                Assert.Ignore("Skipped on AppHarbor");
+
+            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            {
+                repo.RemoveAll();
+                repo.SaveChanges();
+
+                var item = new TestObject { ID = "1", Value = "blah" };
+                repo.Insert(item);
+                repo.SaveChanges();
+
+                Assert.IsTrue(repo.Exists(item));
+                repo.RemoveAll();
+                repo.SaveChanges();
+            }
+        }
+        //===============================================================
+        [Test]
         public void TransactionsWork()
         {
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
