@@ -6,6 +6,7 @@ using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using NUnit.Framework;
 
 namespace Repository.EntityFramework
@@ -164,6 +165,54 @@ namespace Repository.EntityFramework
 
                 items = repo.Items.ToList();
                 Assert.IsTrue(items.All(x => x.Value == "MODIFIED"));
+            }
+        }
+        //===============================================================
+        [Test]
+        public void TransactionsWork()
+        {
+            if (ConfigurationManager.AppSettings["Environment"] == "Test")
+                Assert.Ignore("Skipped on AppHarbor");
+
+            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            {
+                repo.RemoveAll();
+                repo.SaveChanges();
+
+                using (var scope = new TransactionScope())
+                {
+                    repo.Insert(mTestObjects.First());
+                    repo.SaveChanges();
+                    scope.Complete();
+                }
+            }
+
+            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            {
+                Assert.IsTrue(repo.Items.Any());
+                repo.RemoveAll();
+                repo.SaveChanges();
+            }
+
+
+            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            {
+
+                try
+                {
+                    using (var scope = new TransactionScope())
+                    {
+                        repo.Insert(mTestObjects.First());
+                        repo.SaveChanges();
+
+                        throw new Exception();
+                    }
+                }
+
+                catch (Exception e)
+                {
+                    Assert.IsFalse(repo.Items.Any());
+                }
             }
         }
         //===============================================================

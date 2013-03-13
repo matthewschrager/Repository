@@ -16,6 +16,8 @@ namespace Repository
             KeySelector = keySelector;
         }
         //===============================================================
+        public Session<T> Session { get; set; }
+        //===============================================================
         protected Func<T, Object[]> KeySelector { get; private set; }
         //===============================================================
         public abstract void Insert(T value);
@@ -49,7 +51,14 @@ namespace Repository
                 RemoveByKey(keySet);
         }
         //===============================================================
+        public abstract void SaveChanges();
+        //===============================================================
         public abstract bool Exists(params Object[] keys);
+        //===============================================================
+        public bool Exists(T obj)
+        {
+            return Exists(KeySelector(obj));
+        }
         //===============================================================
         public abstract void Update<TValue>(TValue value, params Object[] keys);
         //===============================================================
@@ -60,8 +69,6 @@ namespace Repository
         public abstract void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys);
         //===============================================================
         public abstract ObjectContext<T> Find(params Object[] keys);
-        //===============================================================
-        public abstract void SaveChanges();
         //===============================================================
         public abstract EnumerableObjectContext<T> Items { get; }
         //===============================================================

@@ -18,7 +18,8 @@ namespace Repository
         //===============================================================
         public Repository<T> Add<T>(Func<TContext, Repository<T>> factory) where T : class
         {
-            return factory(Context);
+            var repo = factory(Context);
+            return repo;
         }
         //===============================================================
         public void Dispose()
