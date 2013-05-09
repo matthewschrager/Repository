@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Samples.EntityDataReader;
+using NUnit.Framework;
 
 namespace Repository.EntityFramework
 {
@@ -54,6 +55,14 @@ namespace Repository.EntityFramework
                 connection.Close();
         }
         //===============================================================
+        public static Func<TValue, Object[]> GetKeySelector<TValue>(this DbContext context) where TValue : class
+        {
+            var objectContext = ((IObjectContextAdapter)context).ObjectContext;
+            var set = objectContext.CreateObjectSet<TValue>();
+            var keyNames = set.EntitySet.ElementType.KeyMembers.Select(x => x.Name);
 
+            return x => keyNames.Select(name => typeof(TValue).GetProperty(name).GetValue(x)).ToArray();
+        }
+        //===============================================================
     }
 }

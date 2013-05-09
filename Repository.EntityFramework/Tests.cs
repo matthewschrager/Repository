@@ -11,7 +11,7 @@ using NUnit.Framework;
 
 namespace Repository.EntityFramework
 {
-    internal class TestObject
+    internal class TestObjectWithExplicitKey
     {
         //===============================================================
         [Key]
@@ -21,28 +21,28 @@ namespace Repository.EntityFramework
         //===============================================================
     }
 
-    internal class TestObject2
+    internal class TestObjectWithConventionKey
     {
         //===============================================================
-        [Key]
-        public int ID { get; set; }
+        public String ID { get; set; }
         //===============================================================
         public String Value { get; set; }
+        //===============================================================
     }
 
     internal class TestContext : DbContext
     {
         //===============================================================
-        public DbSet<TestObject> Objects { get; set; }
+        public DbSet<TestObjectWithExplicitKey> ExplicitObjects { get; set; }
         //===============================================================
-        public DbSet<TestObject2> Objects2 { get; set; }
+        public DbSet<TestObjectWithConventionKey> ConventionObjects { get; set; }
         //===============================================================
     }
 
     [TestFixture]
     internal class EFRepositoryTests
     {
-        List<TestObject> mTestObjects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x.ToString(), Value = x.ToString() }).ToList();
+        List<TestObjectWithExplicitKey> mTestObjects = Enumerable.Range(0, 100).Select(x => new TestObjectWithExplicitKey { ID = x.ToString(), Value = x.ToString() }).ToList();
 
         //===============================================================
         [Test]
@@ -51,7 +51,7 @@ namespace Repository.EntityFramework
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
                 Assert.Ignore("Skipped on AppHarbor");
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
                 repo.RemoveAll(repo.Items);
                 repo.Insert(mTestObjects);
@@ -76,7 +76,7 @@ namespace Repository.EntityFramework
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
                 Assert.Ignore("Skipped on AppHarbor");
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
                 repo.RemoveAll(repo.Items);
                 repo.SaveChanges();
@@ -133,12 +133,12 @@ namespace Repository.EntityFramework
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
                 Assert.Ignore("Skipped on AppHarbor");
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
                 repo.RemoveAllByKey(repo.Items.ToList().Select(x => new object[] { x.ID }));
 
 
-                var objects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x.ToString(), Value = x.ToString() }).ToList();
+                var objects = Enumerable.Range(0, 100).Select(x => new TestObjectWithExplicitKey { ID = x.ToString(), Value = x.ToString() }).ToList();
                 repo.Insert(objects);
                 repo.RemoveAll(objects);
             }
@@ -150,12 +150,12 @@ namespace Repository.EntityFramework
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
                 Assert.Ignore("Skipped on AppHarbor");
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
                 repo.RemoveAll();
                 repo.SaveChanges();
 
-                var objects = Enumerable.Range(0, 100).Select(x => new TestObject { ID = x.ToString(), Value = x.ToString() }).ToList();
+                var objects = Enumerable.Range(0, 100).Select(x => new TestObjectWithExplicitKey { ID = x.ToString(), Value = x.ToString() }).ToList();
                 repo.Insert(objects);
                 repo.SaveChanges();
 
@@ -174,12 +174,12 @@ namespace Repository.EntityFramework
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
                 Assert.Ignore("Skipped on AppHarbor");
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
                 repo.RemoveAll();
                 repo.SaveChanges();
 
-                var item = new TestObject { ID = "1", Value = "blah" };
+                var item = new TestObjectWithExplicitKey { ID = "1", Value = "blah" };
                 repo.Insert(item);
                 repo.SaveChanges();
 
@@ -195,7 +195,7 @@ namespace Repository.EntityFramework
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
                 Assert.Ignore("Skipped on AppHarbor");
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
                 repo.RemoveAll();
                 repo.SaveChanges();
@@ -208,7 +208,7 @@ namespace Repository.EntityFramework
                 }
             }
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
                 Assert.IsTrue(repo.Items.Any());
                 repo.RemoveAll();
@@ -216,7 +216,7 @@ namespace Repository.EntityFramework
             }
 
 
-            using (var repo = new EFRepository<TestContext, TestObject>(x => x.Objects, x => x.ID))
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
             {
 
                 try
@@ -235,6 +235,24 @@ namespace Repository.EntityFramework
                     Assert.IsFalse(repo.Items.Any());
                 }
             }
+        }
+        //===============================================================
+    }
+
+    [TestFixture]
+    internal class DbContextExtensionTests
+    {
+        //===============================================================
+        [Test]
+        public void GetKeySelector()
+        {
+            var explicitKey = new TestObjectWithExplicitKey { ID = "myKey" };
+            var explicitKeySelector = new TestContext().GetKeySelector<TestObjectWithExplicitKey>();
+            CollectionAssert.AreEquivalent(new[] { explicitKey.ID }, explicitKeySelector(explicitKey));
+
+            var conventionKey = new TestObjectWithConventionKey { ID = "myKey2" };
+            var conventionKeySelector = new TestContext().GetKeySelector<TestObjectWithConventionKey>();
+            CollectionAssert.AreEquivalent(new[] { conventionKey.ID }, conventionKeySelector(conventionKey));
         }
         //===============================================================
     }

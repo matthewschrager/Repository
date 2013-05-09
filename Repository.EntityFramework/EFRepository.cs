@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -78,19 +79,14 @@ namespace Repository.EntityFramework
         private List<IPendingChange> mPendingChanges = new List<IPendingChange>();
 
         //===============================================================
-        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object[]> keySelector, TContext context = null)
-            : base(keySelector)
+        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
+            : base(GetKeySelector(context))
         {
             OwnsContext = false;
 
             if (context == null)
             {
-                // Find a parameterless constructor. If none exists, throw an exception that lets the user know he must provide a context to this constructor
-                var parameterlessConstructor = typeof(TContext).GetConstructor(new Type[] { });
-                if (parameterlessConstructor == null)
-                    throw new ArgumentException("A default context can only be created if the context type (TContext) has a parameterless constructor.");
-
-                context = Activator.CreateInstance(typeof(TContext)) as TContext;
+                context = InstantiateContext();
                 OwnsContext = true;
             }
 
@@ -99,10 +95,6 @@ namespace Repository.EntityFramework
             InsertBatchSize = 100;
         }
         //===============================================================
-        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, Func<TValue, Object> keySelector, TContext context = null)
-            : this(setSelector, x => new[] { keySelector(x) }, context)
-        { }
-        //===============================================================
         private bool OwnsContext { get; set; }
         //===============================================================
         public TContext Context { get; set; }
@@ -110,6 +102,27 @@ namespace Repository.EntityFramework
         public uint InsertBatchSize { get; set; }
         //===============================================================
         private Func<TContext, DbSet<TValue>> SetSelector { get; set; }
+        //===============================================================
+        private static Func<TValue, Object[]> GetKeySelector(TContext givenContext)
+        {
+            var context = givenContext ?? InstantiateContext();
+            return context.GetKeySelector<TValue>();
+        }
+        //===============================================================
+        private static void CheckForParameterlessConstructor()
+        {
+            // Find a parameterless constructor. If none exists, throw an exception that lets the user know he must provide a context to this constructor
+            var parameterlessConstructor = typeof(TContext).GetConstructor(new Type[] { });
+            if (parameterlessConstructor == null)
+                throw new ArgumentException("A default context can only be created if the context type (TContext) has a parameterless constructor.");
+        }
+        //===============================================================
+        private static TContext InstantiateContext()
+        {
+            CheckForParameterlessConstructor();
+            return Activator.CreateInstance(typeof(TContext)) as TContext;
+
+        }
         //===============================================================
         public override void SaveChanges()
         {
