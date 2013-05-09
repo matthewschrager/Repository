@@ -7,6 +7,8 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using AutoMapper;
+using AutoMapper.Mappers;
 using MoreLinq;
 using NUnit.Framework;
 

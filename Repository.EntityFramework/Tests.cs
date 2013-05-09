@@ -46,6 +46,34 @@ namespace Repository.EntityFramework
 
         //===============================================================
         [Test]
+        public void Update()
+        {
+            if (ConfigurationManager.AppSettings["Environment"] == "Test")
+                Assert.Ignore("Skipped on AppHarbor");
+
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
+            {
+                repo.RemoveAll();
+                repo.SaveChanges();
+
+                var testObj = mTestObjects.First();
+                repo.Insert(testObj);
+                repo.SaveChanges();
+
+                var newObj = new TestObjectWithExplicitKey { ID = testObj.ID, Value = "NEW VALUE" };
+
+                var dbObj = repo.Find(newObj.ID);
+                dbObj.Update(newObj);
+                repo.SaveChanges();
+
+                dbObj = repo.Find(newObj.ID);
+                Assert.AreEqual(newObj.Value, dbObj.Object.Value);
+
+                repo.RemoveAll();
+            }
+        }
+        //===============================================================
+        [Test]
         public void BatchInsertAndRemoveTest()
         {
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
@@ -246,6 +274,9 @@ namespace Repository.EntityFramework
         [Test]
         public void GetKeySelector()
         {
+            if (ConfigurationManager.AppSettings["Environment"] == "Test")
+                Assert.Ignore("Skipped on AppHarbor");
+
             var explicitKey = new TestObjectWithExplicitKey { ID = "myKey" };
             var explicitKeySelector = new TestContext().GetKeySelector<TestObjectWithExplicitKey>();
             CollectionAssert.AreEquivalent(new[] { explicitKey.ID }, explicitKeySelector(explicitKey));

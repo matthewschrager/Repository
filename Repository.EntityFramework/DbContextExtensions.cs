@@ -57,11 +57,17 @@ namespace Repository.EntityFramework
         //===============================================================
         public static Func<TValue, Object[]> GetKeySelector<TValue>(this DbContext context) where TValue : class
         {
+            var keyNames = context.GetKeyNames<TValue>();
+            return x => keyNames.Select(name => typeof(TValue).GetProperty(name).GetValue(x)).ToArray();
+        }
+        //===============================================================
+        public static IEnumerable<String> GetKeyNames<TValue>(this DbContext context) where TValue : class
+        {
             var objectContext = ((IObjectContextAdapter)context).ObjectContext;
             var set = objectContext.CreateObjectSet<TValue>();
-            var keyNames = set.EntitySet.ElementType.KeyMembers.Select(x => x.Name);
+            var keyNames = set.EntitySet.ElementType.KeyMembers.Select(x => x.Name).ToList();
 
-            return x => keyNames.Select(name => typeof(TValue).GetProperty(name).GetValue(x)).ToArray();
+            return keyNames;
         }
         //===============================================================
     }
