@@ -225,7 +225,7 @@ namespace Repository.EntityFramework
         //===============================================================
     }
 
-    public class EFRepository<TContext, TValue, TKey> : TypedKeyRepository<TValue, TKey> where TValue : class where TContext : DbContext
+    public class EFRepository<TContext, TValue, TKey> : Repository<TValue, TKey> where TValue : class where TContext : DbContext
     {
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
@@ -234,7 +234,7 @@ namespace Repository.EntityFramework
         //===============================================================
     }
 
-    public class EFRepository<TContext, TValue, TKey1, TKey2> : TypedKeyRepository<TValue, TKey1, TKey2>
+    public class EFRepository<TContext, TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2>
         where TValue : class
         where TContext : DbContext
     {

@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Repository
 {
-    public abstract class TypedKeyRepository<TValue, TKey> : IDisposable where TValue : class
+    public abstract class Repository<TValue, TKey> : IDisposable where TValue : class
     {
         //===============================================================
-        protected TypedKeyRepository(Repository<TValue> innerRepository)
+        protected Repository(Repository<TValue> innerRepository)
         {
             InnerRepository = innerRepository;
         }
@@ -98,10 +98,10 @@ namespace Repository
         //===============================================================
     }
 
-    public abstract class TypedKeyRepository<TValue, TKey1, TKey2> : IDisposable where TValue : class
+    public abstract class Repository<TValue, TKey1, TKey2> : IDisposable where TValue : class
     {
         //===============================================================
-        protected TypedKeyRepository(Repository<TValue> innerRepository)
+        protected Repository(Repository<TValue> innerRepository)
         {
             InnerRepository = innerRepository;
         }
