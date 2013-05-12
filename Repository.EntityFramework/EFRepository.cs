@@ -225,6 +225,26 @@ namespace Repository.EntityFramework
         //===============================================================
     }
 
+    public class EFRepository<TContext, TValue, TKey> : TypedKeyRepository<TValue, TKey> where TValue : class where TContext : DbContext
+    {
+        //===============================================================
+        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
+            : base(new EFRepository<TContext, TValue>(setSelector, context))
+        {}
+        //===============================================================
+    }
+
+    public class EFRepository<TContext, TValue, TKey1, TKey2> : TypedKeyRepository<TValue, TKey1, TKey2>
+        where TValue : class
+        where TContext : DbContext
+    {
+        //===============================================================
+        public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
+            : base(new EFRepository<TContext, TValue>(setSelector, context))
+        { }
+        //===============================================================
+    }
+
     public class EFObjectContext<T> : ObjectContext<T> where T : class
     {
         private T mObject;

@@ -46,6 +46,34 @@ namespace Repository.EntityFramework
 
         //===============================================================
         [Test]
+        public void TypedRepositoryTest()
+        {
+            if (ConfigurationManager.AppSettings["Environment"] == "Test")
+                Assert.Ignore("Skipped on AppHarbor");
+
+            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey, String>(x => x.ExplicitObjects))
+            {
+                repo.RemoveAll();
+                repo.SaveChanges();
+
+                var testObj = mTestObjects.First();
+                repo.Insert(testObj);
+                repo.SaveChanges();
+
+                var newObj = new TestObjectWithExplicitKey { ID = testObj.ID, Value = "NEW VALUE" };
+
+                var dbObj = repo.Find(newObj.ID);
+                dbObj.Update(newObj);
+                repo.SaveChanges();
+
+                dbObj = repo.Find(newObj.ID);
+                Assert.AreEqual(newObj.Value, dbObj.Object.Value);
+
+                repo.RemoveAll();
+            }
+        }
+        //===============================================================
+        [Test]
         public void Update()
         {
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
