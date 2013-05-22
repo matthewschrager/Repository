@@ -9,8 +9,7 @@
     <licenseUrl>https://github.com/matthewschrager/Repository#license</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added support for Update.</releaseNotes>
-    <copyright>Copyright Matthew Schrager 2012</copyright>
+    <copyright>Copyright Matthew Schrager 2013</copyright>
     <tags>Repository EntityFramework</tags>
 	<dependencies>
 		<dependency id="Repository" />

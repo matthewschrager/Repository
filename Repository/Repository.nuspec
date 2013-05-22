@@ -10,8 +10,7 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
 	<projectUrl>https://github.com/matthewschrager/Repository</projectUrl>
     <description>$description$</description>
-    <releaseNotes>Added basic documentation.</releaseNotes>
-    <copyright>Copyright Matthew Schrager 2012</copyright>
+    <copyright>Copyright Matthew Schrager 2013</copyright>
     <tags>Repository</tags>
     <dependencies>
       <dependency id="AutoMapper"></dependency>
