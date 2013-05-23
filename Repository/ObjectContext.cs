@@ -8,23 +8,39 @@ using System.Text;
 
 namespace Repository
 {
-    public abstract class ObjectContext<T> where T : class
+    public class ObjectContext<T> where T : class
     {
         //===============================================================
-        public abstract T Object { get; }
+        public ObjectContext(T obj)
+        {
+            Object = obj;
+        }
         //===============================================================
-        public abstract void Update<TValue>(TValue value);
+        public T Object { get; private set; }
         //===============================================================
-        public abstract void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter);
+        public void Update<TValue>(TValue value)
+        {
+            AutoMapper.Mapper.DynamicMap(value, Object);
+        }
+        //===============================================================
+        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
+        {
+            AutoMapper.Mapper.DynamicMap(value, getter(Object));
+        }
         //===============================================================
     }
 
-    public abstract class EnumerableObjectContext<T> : IQueryable<T> where T : class
+    public class EnumerableObjectContext<T> : IQueryable<T> where T : class
     {
         private IQueryProvider mCachedQueryProvider = null;
 
         //===============================================================
-        protected abstract IQueryable<T> Objects { get; }
+        public EnumerableObjectContext(IQueryable<T> objects)
+        {
+            Objects = objects;
+        }
+        //===============================================================
+        protected IQueryable<T> Objects { get; private set; }
         //===============================================================
         public IEnumerator<T> GetEnumerator()
         {

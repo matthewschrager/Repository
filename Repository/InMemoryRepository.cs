@@ -45,16 +45,16 @@ namespace Repository
         //===============================================================
     }
 
-    internal class InMemoryModify : Modify
+    internal class InMemoryModify<TValue> : Modify<TValue>
     {
         //===============================================================
-        public InMemoryModify(Action change)
-            : base(change)
+        public InMemoryModify(TValue value, Action<TValue> modifier)
+            : base(value, modifier)
         {}
         //===============================================================
         public override void Apply()
         {
-            Change();
+            Modifier(Value);
         }
         //===============================================================
     }
@@ -105,12 +105,12 @@ namespace Repository
 
             T obj = null;
             mData.TryGetValue(keys.First().ToString(), out obj);
-            return new InMemoryObjectContext<T>(obj);
+            return new ObjectContext<T>(obj);
         }
         //===============================================================
         public override EnumerableObjectContext<T> Items
         {
-            get { return new InMemoryEnumerableObjectContext<T>(mData.Values.AsQueryable()); }
+            get { return new EnumerableObjectContext<T>(mData.Values.AsQueryable()); }
         }
         //===============================================================
         public override void Update<TValue>(TValue value, params Object[] keys)
@@ -119,7 +119,7 @@ namespace Repository
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
 
             var existingValue = mData[keys.First().ToString()];
-            mPendingChanges.Add(new InMemoryModify(() => AutoMapper.Mapper.DynamicMap(value, existingValue)));
+            mPendingChanges.Add(new InMemoryModify<T>(existingValue, x => AutoMapper.Mapper.DynamicMap(value, x)));
         }
         //===============================================================
         public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
@@ -128,7 +128,7 @@ namespace Repository
                 throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
 
             var existingValue = mData[keys.First().ToString()];
-            mPendingChanges.Add(new InMemoryModify(() => AutoMapper.Mapper.DynamicMap(value, getter(existingValue))));
+            mPendingChanges.Add(new InMemoryModify<T>(existingValue, x => AutoMapper.Mapper.DynamicMap(value, getter(x))));
         }
         //===============================================================
         public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
@@ -148,50 +148,6 @@ namespace Repository
         public override void Dispose()
         {
             // In-memory repository doesn't need to dispose of anything.
-        }
-        //===============================================================
-    }
-
-    public class InMemoryObjectContext<T> : ObjectContext<T> where T : class
-    {
-        private T mObject; 
-
-        //===============================================================
-        public InMemoryObjectContext(T value)
-        {
-            mObject = value;
-        }
-        //===============================================================
-        public override T Object
-        {
-            get { return mObject; }
-        }
-        //===============================================================
-        public override void Update<TValue>(TValue value)
-        {
-            AutoMapper.Mapper.DynamicMap(value, Object);
-        }
-        //===============================================================
-        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
-        {
-            AutoMapper.Mapper.DynamicMap(value, getter(Object));
-        }
-        //===============================================================
-    }
-
-    public class InMemoryEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
-    {
-        private IQueryable<T> mObjects;
-
-        //===============================================================
-        public InMemoryEnumerableObjectContext(IQueryable<T> objects)
-        {
-            mObjects = objects;
-        }
-        //===============================================================
-        protected override IQueryable<T> Objects
-        {
-            get { return mObjects; }
         }
         //===============================================================
     }

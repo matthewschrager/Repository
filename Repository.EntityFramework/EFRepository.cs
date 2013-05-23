@@ -183,12 +183,12 @@ namespace Repository.EntityFramework
         public override ObjectContext<TValue> Find(params Object[] keys)
         {
             var set = SetSelector(Context);
-            return new EFObjectContext<TValue>(set.Find(keys));
+            return new ObjectContext<TValue>(set.Find(keys));
         }
         //===============================================================
         public override EnumerableObjectContext<TValue> Items
         {
-            get { return new EFEnumerableObjectContext<TValue>(SetSelector(Context)); }
+            get { return new EnumerableObjectContext<TValue>(SetSelector(Context)); }
         }
         //===============================================================
         public override void Update<T>(T value, params Object[] keys)
@@ -242,50 +242,6 @@ namespace Repository.EntityFramework
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
             : base(new EFRepository<TContext, TValue>(setSelector, context))
         { }
-        //===============================================================
-    }
-
-    public class EFObjectContext<T> : ObjectContext<T> where T : class
-    {
-        private T mObject;
-
-        //===============================================================
-        public EFObjectContext(T value)
-        {
-            mObject = value;
-        }
-        //===============================================================
-        public override T Object
-        {
-            get { return mObject; }
-        }
-        //===============================================================
-        public override void Update<TValue>(TValue value)
-        {
-            AutoMapper.Mapper.DynamicMap(value, Object);
-        }
-        //===============================================================
-        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
-        {
-            AutoMapper.Mapper.DynamicMap(value, getter(Object));
-        }
-        //===============================================================
-    }
-
-    public class EFEnumerableObjectContext<T> : EnumerableObjectContext<T> where T : class
-    {
-        private DbSet<T> mObjects;
-
-        //===============================================================
-        public EFEnumerableObjectContext(DbSet<T> objects)
-        {
-            mObjects = objects;
-        }
-        //===============================================================
-        protected override IQueryable<T> Objects
-        {
-            get { return mObjects; }
-        }
         //===============================================================
     }
 }
