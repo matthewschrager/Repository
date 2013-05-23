@@ -10,10 +10,10 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <copyright>Copyright Matthew Schrager 2013</copyright>
-    <tags>Repository EntityFramework</tags>
+    <tags>Repository Azure Storage</tags>
 	<dependencies>
 		<dependency id="Repository" />
-		<dependency id="EntityFramework" />
+		<dependency id="WindowsAzure.Storage" />
 	</dependencies>
   </metadata>
 </package>
