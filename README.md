@@ -142,7 +142,7 @@ License
 Repository is licensed under the New BSD License:
 
 ```
-Copyright (c) 2012, Matthew Schrager
+Copyright (c) 2013, Matthew Schrager
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

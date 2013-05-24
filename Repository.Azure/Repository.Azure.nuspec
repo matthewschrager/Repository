@@ -8,6 +8,7 @@
     <owners>$author$</owners>
     <licenseUrl>https://github.com/matthewschrager/Repository#license</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectUrl>https://github.com/matthewschrager/Repository</projectUrl>
     <description>$description$</description>
     <copyright>Copyright Matthew Schrager 2013</copyright>
     <tags>Repository Azure Storage</tags>
