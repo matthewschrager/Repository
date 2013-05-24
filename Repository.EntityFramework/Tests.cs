@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Configuration;
 using System.Data.Entity;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace Repository.EntityFramework
     internal class TestObjectWithExplicitKey
     {
         //===============================================================
-        [Key]
+        [Key, Column]
         public String ID { get; set; }
         //===============================================================
         public String Value { get; set; }

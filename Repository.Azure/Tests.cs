@@ -43,16 +43,13 @@ namespace Repository.Azure
     internal class GenericTestObject<T>
     {
         //===============================================================
-        public GenericTestObject(String key1, String key2, T value)
+        public GenericTestObject(String key1, T value)
         {
             Key1 = key1;
-            Key2 = key2;
             Value = value;
         }
         //===============================================================
         public String Key1 { get; set; }
-        //===============================================================
-        public String Key2 { get; set; }
         //===============================================================
         public T Value { get; set; }
         //===============================================================
@@ -64,14 +61,14 @@ namespace Repository.Azure
         private static readonly String EmulatorConnectionString = "DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
         
         //===============================================================
-        private AzureRepository<TestObject, String> TestObjects()
+        private AzureRepository<TestObject, String> TestObjects(AzureOptions options = null)
         {
-            return AzureRepository<TestObject, String>.CreateForStorageEmulator(x => x.ID);
+            return AzureRepository<TestObject, String>.CreateForStorageEmulator(x => x.ID, options);
         }
         //===============================================================
-        private AzureRepository<GenericTestObject<int>, String, String> GenericTestObjects()
+        private AzureRepository<GenericTestObject<int>, String> GenericTestObjects(AzureOptions options = null)
         {
-            return AzureRepository<GenericTestObject<int>, String, String>.CreateForStorageEmulator(x => Tuple.Create(x.Key1, x.Key2));
+            return AzureRepository<GenericTestObject<int>, String>.CreateForStorageEmulator(x => x.Key1, options);
         }
         //===============================================================
         [Test]
@@ -96,21 +93,20 @@ namespace Repository.Azure
 
             // Try with generic object
             var genericObjects = GenericTestObjects();
-            var genericObj = new GenericTestObject<int>("key1", "key2", 1);
+            var genericObj = new GenericTestObject<int>("key1", 1);
 
             genericObjects.Insert(genericObj);
             genericObjects.SaveChanges();
 
-            var storedGeneric = genericObjects.Find(genericObj.Key1, genericObj.Key2);
+            var storedGeneric = genericObjects.Find(genericObj.Key1);
             Assert.NotNull(storedGeneric.Object);
             Assert.AreEqual(genericObj.Key1, storedGeneric.Object.Key1);
-            Assert.AreEqual(genericObj.Key2, storedGeneric.Object.Key2);
             Assert.AreEqual(genericObj.Value, storedGeneric.Object.Value);
 
             genericObjects.Remove(genericObj);
             genericObjects.SaveChanges();
 
-            storedGeneric = genericObjects.Find(genericObj.Key1, genericObj.Key2);
+            storedGeneric = genericObjects.Find(genericObj.Key1);
             Assert.Null(storedGeneric.Object);
         }
         //===============================================================

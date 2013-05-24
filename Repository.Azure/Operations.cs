@@ -11,20 +11,17 @@ namespace Repository.Azure
     internal class AzureInsert<T> : Insert<T> where T : class
     {
         //===============================================================
-        public AzureInsert(IEnumerable<Object> keys, T value, AzureApi azureApi, String containerName)
+        public AzureInsert(IEnumerable<Object> keys, T value, AzureContainerInterface azureContainerInterface)
             : base(keys, value)
         {
-            AzureApi = azureApi;
-            ContainerName = containerName;
+            AzureContainerInterface = azureContainerInterface;
         }
         //===============================================================
-        private AzureApi AzureApi { get; set; }
-        //===============================================================
-        private String ContainerName { get; set; }
+        private AzureContainerInterface AzureContainerInterface { get; set; }
         //===============================================================
         public override void Apply()
         {
-            AzureApi.StoreObject(Value, Keys, ContainerName);
+            AzureContainerInterface.StoreObject(Value, Keys);
         }
         //===============================================================
     }
@@ -32,20 +29,17 @@ namespace Repository.Azure
     internal class AzureRemove : Remove
     {
         //===============================================================
-        public AzureRemove(IEnumerable<Object> keys, AzureApi azureApi, String containerName)
+        public AzureRemove(IEnumerable<Object> keys, AzureContainerInterface azureContainerInterface)
             : base(keys)
         {
-            AzureApi = azureApi;
-            ContainerName = containerName;
+            AzureContainerInterface = azureContainerInterface;
         }
         //===============================================================
-        private AzureApi AzureApi { get; set; }
-        //===============================================================
-        private String ContainerName { get; set; }
+        private AzureContainerInterface AzureContainerInterface { get; set; }
         //===============================================================
         public override void Apply()
         {
-            AzureApi.DeleteObject(Keys, ContainerName);
+            AzureContainerInterface.DeleteObject(Keys);
         }
         //===============================================================
     }
@@ -53,19 +47,16 @@ namespace Repository.Azure
     internal class AzureRemoveAll : IPendingChange
     {
         //===============================================================
-        public AzureRemoveAll(AzureApi azureApi, String containerName)
+        public AzureRemoveAll(AzureContainerInterface azureContainerInterface)
         {
-            AzureApi = azureApi;
-            ContainerName = containerName;
+            AzureContainerInterface = azureContainerInterface;
         }
         //===============================================================
-        private AzureApi AzureApi { get; set; }
-        //===============================================================
-        private String ContainerName { get; set; }
+        private AzureContainerInterface AzureContainerInterface { get; set; }
         //===============================================================
         public void Apply()
         {
-            AzureApi.DeleteContainer(ContainerName);
+            AzureContainerInterface.DeleteContainer();
         }
         //===============================================================
     }
@@ -73,24 +64,23 @@ namespace Repository.Azure
     internal class AzureModify<T> : Modify<T>
     {
         //===============================================================
-        public AzureModify(T value, IEnumerable<Object> keys, Action<T> modifier, AzureApi azureApi, String containerName)
+        public AzureModify(T value, IEnumerable<Object> keys, Action<T> modifier, AzureContainerInterface azureContainerInterface)
             : base(value, modifier)
         {
-            AzureApi = azureApi;
-            ContainerName = containerName;
+            AzureContainerInterface = azureContainerInterface;
             Keys = keys;
         }
         //===============================================================
         private IEnumerable<Object> Keys { get; set; }
         //===============================================================
-        private AzureApi AzureApi { get; set; }
+        private AzureContainerInterface AzureContainerInterface { get; set; }
         //===============================================================
         private String ContainerName { get; set; }
         //===============================================================
         public override void Apply()
         {
             Modifier(Value);
-            AzureApi.StoreObject(Value, Keys, ContainerName);
+            AzureContainerInterface.StoreObject(Value, Keys);
         }
         //===============================================================
     }

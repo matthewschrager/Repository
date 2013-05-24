@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web.Configuration;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 
@@ -50,6 +52,15 @@ namespace Repository.Azure
         public static String GetSanitizedContainerName<TValue>()
         {
             return GetSanitizedContainerName(typeof(TValue));
+        }
+        //===============================================================
+        public static String GetNamedConnectionString(String name)
+        {
+            var connStr = ConfigurationManager.ConnectionStrings[name].ConnectionString;
+            if (String.IsNullOrWhiteSpace(connStr))
+                connStr = WebConfigurationManager.ConnectionStrings[name].ConnectionString;
+
+            return connStr;
         }
         //===============================================================
     }

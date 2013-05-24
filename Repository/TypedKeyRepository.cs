@@ -14,7 +14,7 @@ namespace Repository
             InnerRepository = innerRepository;
         }
         //===============================================================
-        protected Repository<TValue> InnerRepository { get; set; }
+        protected Repository<TValue> InnerRepository { get; private set; }
         //===============================================================
         public void Insert(TValue value)
         {
@@ -106,7 +106,7 @@ namespace Repository
             InnerRepository = innerRepository;
         }
         //===============================================================
-        protected Repository<TValue> InnerRepository { get; set; }
+        protected Repository<TValue> InnerRepository { get; private set; }
         //===============================================================
         public void Insert(TValue value)
         {
