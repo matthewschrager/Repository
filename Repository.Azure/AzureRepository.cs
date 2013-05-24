@@ -128,6 +128,11 @@ namespace Repository.Azure
             return new ObjectContext<T>(obj);
         }
         //===============================================================
+        public Uri GetObjectUri(params Object[] keys)
+        {
+            return AzureApi.GetObjectUri(keys, ContainerName);
+        }
+        //===============================================================
         public override EnumerableObjectContext<T> Items
         {
             get { return new EnumerableObjectContext<T>(AzureApi.EnumerateObjects<T>(ContainerName).AsQueryable()); }
@@ -156,6 +161,11 @@ namespace Repository.Azure
             return new AzureRepository<TValue, TKey>(keySelector, CloudStorageAccount.DevelopmentStorageAccount);
         }
         //===============================================================
+        public Uri GetObjectUri(TKey key)
+        {
+            return (InnerRepository as AzureRepository<TValue>).GetObjectUri(key);
+        }
+        //===============================================================
     }
 
     public class AzureRepository<TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2> where TValue : class
@@ -172,6 +182,11 @@ namespace Repository.Azure
         public static AzureRepository<TValue, TKey1, TKey2> CreateForStorageEmulator(Func<TValue, Tuple<TKey1, TKey2>> keySelector)
         {
             return new AzureRepository<TValue, TKey1, TKey2>(keySelector, CloudStorageAccount.DevelopmentStorageAccount);
+        }
+        //===============================================================
+        public Uri GetObjectUri(TKey1 key1, TKey2 key2)
+        {
+            return (InnerRepository as AzureRepository<TValue>).GetObjectUri(key1, key2);
         }
         //===============================================================
     }

@@ -99,5 +99,11 @@ namespace Repository.Azure
             return container.ListBlobs(null, true).Cast<CloudBlockBlob>().Select(DeserializeBlock<T>);
         }
         //===============================================================
+        public Uri GetObjectUri(IEnumerable<Object> keys, String containerName)
+        {
+            var block = GetBlock(containerName, keys);
+            return block.Uri;
+        }
+        //===============================================================
     }
 }
