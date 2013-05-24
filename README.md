@@ -136,6 +136,95 @@ using (var repository = new MyConcreteRepository<MyClass>())
 }
 ```
 
+
+Typed Key Repositories
+==========================
+Stored objects are accessed by their keys, as in the examples above. Normally, keys are passed into ```Repository``` methods as untyped ```params``` arguments; as a result,
+the compiler will not perform any checks for either the number of types of keys passed in. This allows for flexibility in the types of keys you can use,
+but also negates some of the benefits of having a strongly-typed generic repository in the first place. 
+
+In order to fix this potential problem, this library contains a series of ```Repository``` base classes that take type parameters for keys. These classes
+simply wrap the "untyped" repositories with strongly-typed versions of certain methods, like ```Find``` and ```RemoveByKey```. In order to make typed versions of
+your repositories available, simply derive from the strongly-typed versions of ```Repository``` and pass in instances of your untyped repositories to the base
+constructor.
+
+For example, ```EFRepository``` exposes strongly-typed versions (for classes with up to two key values) like so:
+
+
+```C#
+public class EFRepository<TContext, TValue, TKey> : Repository<TValue, TKey> where TValue : class where TContext : DbContext
+{
+    //===============================================================
+    public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
+        : base(new EFRepository<TContext, TValue>(setSelector, context))
+    {}
+    //===============================================================
+}
+
+public class EFRepository<TContext, TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2>
+    where TValue : class
+    where TContext : DbContext
+{
+    //===============================================================
+    public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
+        : base(new EFRepository<TContext, TValue>(setSelector, context))
+    { }
+    //===============================================================
+}
+```
+
+All these classes do is instantiate untyped instances of ```EFRepository``` and pass them into the base ```Repository``` constructor. Once instantiated,
+these strongly-typed versions of ```EFRepository``` will enforce type safety on all key lookups. You can see this by looking at methods that make use of keys. For
+example, the signature of ```Find``` in the strongly-typed version of ```Repository``` looks like this:
+
+```C#
+public ObjectContext<TValue> Find(TKey key)
+{
+    return InnerRepository.Find(key);
+}
+```
+
+Notice how, instead of ```params Object[]```, the sole argument here is of type ```TKey```. This will allow the compiler to check for invalid lookups at compile-time,
+which can be very handy.
+
+EFRepository 
+==============
+
+In order to create an instance of EFRepository, you need to first declare a derived class of 
+[DbContext](http://msdn.microsoft.com/en-us/library/system.data.entity.dbcontext(v=vs.103).aspx)
+with ```DbSet``` instances for all of the types for which you want to have repositories. An example ```DbContext``` might look like this:
+
+```C#
+class TestClass
+{
+	[Key]
+	public String Key { get; set; }
+}
+
+/* ... */
+
+class MyContext : DbContext
+{
+	public DbSet<TestClass> TestClasses { get; set; }
+}
+```
+
+Once a subclass of ```DbContext``` is defined, you can instantiate an ```EFRepository``` for type ```TestClass``` like so:
+
+```C#
+var repository = new EFRepository<MyContext, TestClass>(x => x.TestClasses);
+```
+
+The sole argument to the constructor is a ```Func<MyContext, TestClass>``` that tells the repository how to find the appropriate ```DbSet``` in the ```DbContext```.
+
+Note that the procedures normally followed when using Entity Framework must still be followed here; that is, you should still specify connection strings in
+your ```Web.config``` and decorate your key properties with ```[Key]``` attributes if necessary.
+
+AzureRepository
+===============
+
+Documentation coming soon!
+
 License
 ===========
 
