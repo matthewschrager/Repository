@@ -11,13 +11,13 @@ namespace Repository.Azure
     internal class AzureInsert<T> : Insert<T>
     {
         //===============================================================
-        public AzureInsert(IEnumerable<Object> keys, T value, AzureContainerInterface azureContainerInterface)
+        public AzureInsert(IEnumerable<Object> keys, T value, AzureContainerInterface<T> azureContainerInterface)
             : base(keys, value)
         {
             AzureContainerInterface = azureContainerInterface;
         }
         //===============================================================
-        private AzureContainerInterface AzureContainerInterface { get; set; }
+        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
         //===============================================================
         public override void Apply()
         {
@@ -26,16 +26,16 @@ namespace Repository.Azure
         //===============================================================
     }
 
-    internal class AzureRemove : Remove
+    internal class AzureRemove<T> : Remove
     {
         //===============================================================
-        public AzureRemove(IEnumerable<Object> keys, AzureContainerInterface azureContainerInterface)
+        public AzureRemove(IEnumerable<Object> keys, AzureContainerInterface<T> azureContainerInterface)
             : base(keys)
         {
             AzureContainerInterface = azureContainerInterface;
         }
         //===============================================================
-        private AzureContainerInterface AzureContainerInterface { get; set; }
+        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
         //===============================================================
         public override void Apply()
         {
@@ -44,15 +44,15 @@ namespace Repository.Azure
         //===============================================================
     }
 
-    internal class AzureRemoveAll : IPendingChange
+    internal class AzureRemoveAll<T> : IPendingChange
     {
         //===============================================================
-        public AzureRemoveAll(AzureContainerInterface azureContainerInterface)
+        public AzureRemoveAll(AzureContainerInterface<T> azureContainerInterface)
         {
             AzureContainerInterface = azureContainerInterface;
         }
         //===============================================================
-        private AzureContainerInterface AzureContainerInterface { get; set; }
+        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
         //===============================================================
         public void Apply()
         {
@@ -64,7 +64,7 @@ namespace Repository.Azure
     internal class AzureModify<T> : Modify<T>
     {
         //===============================================================
-        public AzureModify(T value, IEnumerable<Object> keys, Action<T> modifier, AzureContainerInterface azureContainerInterface)
+        public AzureModify(T value, IEnumerable<Object> keys, Action<T> modifier, AzureContainerInterface<T> azureContainerInterface)
             : base(value, modifier)
         {
             AzureContainerInterface = azureContainerInterface;
@@ -73,9 +73,7 @@ namespace Repository.Azure
         //===============================================================
         private IEnumerable<Object> Keys { get; set; }
         //===============================================================
-        private AzureContainerInterface AzureContainerInterface { get; set; }
-        //===============================================================
-        private String ContainerName { get; set; }
+        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
         //===============================================================
         public override void Apply()
         {

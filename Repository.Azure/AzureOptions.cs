@@ -3,25 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Repository.Azure.Serialization;
 
 namespace Repository.Azure
 {
-    public class AzureOptions
+    public class AzureOptions<T>
     {
         //===============================================================
         public AzureOptions()
         {
-            Serializer = new JsonSerializer();
-            Encoding = Encoding.UTF8;
+            Encoder = new EncodingEncoder<T>(Encoding.UTF8, new JsonSerializer<T>());
         }
         //===============================================================
-        public ISerializer Serializer { get; set; } 
+        public Encoder<T> Encoder { get; set; } 
         //===============================================================
         public String ContainerName { get; set; }
         //===============================================================
         public String ContentType { get; set; }
-        //===============================================================
-        public Encoding Encoding { get; set; }
         //===============================================================
     }
 }

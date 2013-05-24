@@ -9,16 +9,16 @@ using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Repository.Azure
 {
-    internal class AzureContainerInterface
+    internal class AzureContainerInterface<T>
     {
         //===============================================================
-        public AzureContainerInterface(CloudStorageAccount storageAccount, AzureOptions options)
+        public AzureContainerInterface(CloudStorageAccount storageAccount, AzureOptions<T> options)
         {
             StorageAccount = storageAccount;
             Options = options;
         }
         //===============================================================
-        private AzureOptions Options { get; set; }
+        private AzureOptions<T> Options { get; set; }
         //===============================================================
         private CloudStorageAccount StorageAccount { get; set; }
         //===============================================================
@@ -42,24 +42,30 @@ namespace Repository.Azure
             return container;
         }
         //===============================================================
-        private T DeserializeBlock<T>(CloudBlockBlob block)
+        private T DeserializeBlock(CloudBlockBlob block)
         {
             using (var stream = new MemoryStream())
             {
                 block.DownloadToStream(stream);
-                var str = Options.Encoding.GetString(stream.ToArray());
-                return Options.Serializer.Deserialize<T>(str);
+                
+                var obj = Options.Encoder.Decode(stream.ToArray());
+                return obj;
             }
         }
         //===============================================================
-        public void StoreObject<T>(T value, IEnumerable<Object> keys)
+        public void StoreObject(T value, IEnumerable<Object> keys)
         {
             var block = GetBlock(keys);
-            var encodedValue = Options.Encoding.GetBytes(Options.Serializer.Serialize(value));
-            using (var stream = new MemoryStream(encodedValue))
+            var encodedValue = Options.Encoder.Encode(value);
+            using (var stream = new MemoryStream())
             {
-                stream.Seek(0, SeekOrigin.Begin);
-                block.UploadFromStream(stream);
+                using (var writer = new BinaryWriter(stream))
+                {
+                    writer.Write(encodedValue);
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                    block.UploadFromStream(stream);
+                }
             }
 
             if (!String.IsNullOrWhiteSpace(Options.ContentType))
@@ -69,13 +75,13 @@ namespace Repository.Azure
             }
         }
         //===============================================================
-        public GetObjectResult<T> GetObject<T>(IEnumerable<Object> keys)
+        public GetObjectResult<T> GetObject(IEnumerable<Object> keys)
         {
             var block = GetBlock(keys);
             if (!block.Exists())
                 return new GetObjectResult<T>();
 
-            return new GetObjectResult<T>(DeserializeBlock<T>(block));
+            return new GetObjectResult<T>(DeserializeBlock(block));
         }
         //===============================================================
         public void DeleteObject(IEnumerable<Object> keys)
@@ -96,10 +102,10 @@ namespace Repository.Azure
             return block.Exists();
         }
         //===============================================================
-        public IEnumerable<T> EnumerateObjects<T>()
+        public IEnumerable<T> EnumerateObjects()
         {
             var container = GetContainer();
-            return container.ListBlobs(null, true).Cast<CloudBlockBlob>().Select(DeserializeBlock<T>);
+            return container.ListBlobs(null, true).Cast<CloudBlockBlob>().Select(DeserializeBlock);
         }
         //===============================================================
         public Uri GetObjectUri(IEnumerable<Object> keys)

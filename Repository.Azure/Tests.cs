@@ -59,22 +59,22 @@ namespace Repository.Azure
     internal class Tests
     {
         //===============================================================
-        private AzureRepository<TestObject, String> TestObjects(AzureOptions options = null)
+        private AzureRepository<TestObject, String> TestObjects(AzureOptions<TestObject> options = null)
         {
             return AzureRepository<TestObject, String>.CreateForStorageEmulator(x => x.ID, options);
         }
         //===============================================================
-        private AzureRepository<GenericTestObject<int>, String> GenericTestObjects(AzureOptions options = null)
+        private AzureRepository<GenericTestObject<int>, String> GenericTestObjects(AzureOptions<GenericTestObject<int>>  options = null)
         {
             return AzureRepository<GenericTestObject<int>, String>.CreateForStorageEmulator(x => x.Key1, options);
         }
         //===============================================================
-        private ExplicitKeyAzureRepository<TestObject, String> ExplicitKeyTestObjects(AzureOptions options = null)
+        private ExplicitKeyAzureRepository<TestObject, String> ExplicitKeyTestObjects(AzureOptions<TestObject> options = null)
         {
             return ExplicitKeyAzureRepository<TestObject, String>.CreateForStorageEmulator(options);
         }
         //===============================================================
-        private ExplicitKeyAzureRepository<String, String> Strings(AzureOptions options = null)
+        private ExplicitKeyAzureRepository<String, String> Strings(AzureOptions<String> options = null)
         {
             return ExplicitKeyAzureRepository<String, String>.CreateForStorageEmulator(options);
         }

@@ -17,63 +17,63 @@ namespace Repository.Azure
     public class AzureRepository<T> : Repository.Repository<T>
     {
         //===============================================================
-        public AzureRepository(Func<T, object> keySelector, String connectionString, AzureOptions options = null)
+        public AzureRepository(Func<T, object> keySelector, String connectionString, AzureOptions<T> options = null)
             : this(x => new[] { keySelector(x) }, connectionString, options)
         {}
         //===============================================================
-        public AzureRepository(Func<T, object[]> keySelector, String connectionString, AzureOptions options = null)
+        public AzureRepository(Func<T, object[]> keySelector, String connectionString, AzureOptions<T> options = null)
             : this(keySelector, CloudStorageAccount.Parse(connectionString), options)
         {
             ConnectionString = connectionString;
         }
         //===============================================================
-        internal AzureRepository(Func<T, object[]> keySelector, CloudStorageAccount storageAccount, AzureOptions options = null)
+        internal AzureRepository(Func<T, object[]> keySelector, CloudStorageAccount storageAccount, AzureOptions<T> options = null)
             : base(keySelector)
         {
-            Options = options ?? new AzureOptions();
+            Options = options ?? new AzureOptions<T>();
             Options.ContainerName = Options.ContainerName != null ? AzureUtility.SanitizeContainerName(Options.ContainerName) : AzureUtility.GetSanitizedContainerName<T>();
 
-            AzureContainerInterface = new AzureContainerInterface(storageAccount, Options);
+            AzureContainerInterface = new AzureContainerInterface<T>(storageAccount, Options);
             PendingChanges = new List<IPendingChange>();
         }
         //===============================================================
-        public static AzureRepository<T> FromExplicitConnectionString(Func<T, object[]> keySelector, String connectionString, AzureOptions options = null)
+        public static AzureRepository<T> FromExplicitConnectionString(Func<T, object[]> keySelector, String connectionString, AzureOptions<T> options = null)
         {
             return new AzureRepository<T>(keySelector, connectionString, options);
         }
         //===============================================================
-        public static AzureRepository<T> FromExplicitConnectionString(Func<T, object> keySelector, String connectionString, AzureOptions options = null)
+        public static AzureRepository<T> FromExplicitConnectionString(Func<T, object> keySelector, String connectionString, AzureOptions<T> options = null)
         {
             return new AzureRepository<T>(keySelector, connectionString, options);
         }
         //===============================================================
-        public static AzureRepository<T> FromNamedConnectionString(Func<T, object[]> keySelector, String connectionStringName, AzureOptions options = null)
+        public static AzureRepository<T> FromNamedConnectionString(Func<T, object[]> keySelector, String connectionStringName, AzureOptions<T> options = null)
         {
             var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
             return FromExplicitConnectionString(keySelector, connStr, options);
         }
         //===============================================================
-        public static AzureRepository<T> FromNamedConnectionString(Func<T, object> keySelector, String connectionStringName, AzureOptions options = null)
+        public static AzureRepository<T> FromNamedConnectionString(Func<T, object> keySelector, String connectionStringName, AzureOptions<T> options = null)
         {
             var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
             return FromExplicitConnectionString(keySelector, connStr, options);
         }
         //===============================================================
-        public static AzureRepository<T> ForStorageEmulator(Func<T, object[]> keySelector, AzureOptions options = null)
+        public static AzureRepository<T> ForStorageEmulator(Func<T, object[]> keySelector, AzureOptions<T> options = null)
         {
             return new AzureRepository<T>(keySelector, CloudStorageAccount.DevelopmentStorageAccount, options);
         }
         //===============================================================
-        public static AzureRepository<T> ForStorageEmulator(Func<T, object> keySelector, AzureOptions options = null)
+        public static AzureRepository<T> ForStorageEmulator(Func<T, object> keySelector, AzureOptions<T> options = null)
         {
             return ForStorageEmulator(x => new[] { keySelector(x) }, options);
         }
         //===============================================================
-        private AzureOptions Options { get; set; }
+        private AzureOptions<T> Options { get; set; }
         //===============================================================
         private String ConnectionString { get; set; }
         //===============================================================
-        private AzureContainerInterface AzureContainerInterface { get; set; }
+        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
         //===============================================================
         private IList<IPendingChange> PendingChanges { get; set; }
         //===============================================================
@@ -84,7 +84,7 @@ namespace Repository.Azure
         //===============================================================
         public override void RemoveByKey(params object[] keys)
         {
-            PendingChanges.Add(new AzureRemove(keys, AzureContainerInterface));
+            PendingChanges.Add(new AzureRemove<T>(keys, AzureContainerInterface));
         }
         //===============================================================
         public override void SaveChanges()
@@ -100,7 +100,7 @@ namespace Repository.Azure
         //===============================================================
         public override void Update<TValue>(TValue value, params object[] keys)
         {
-            var existingObj = AzureContainerInterface.GetObject<T>(keys);
+            var existingObj = AzureContainerInterface.GetObject(keys);
             if (!existingObj.HasObject)
                 return;
 
@@ -109,7 +109,7 @@ namespace Repository.Azure
         //===============================================================
         public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params object[] keys)
         {
-            var existingObj = AzureContainerInterface.GetObject<T>(keys);
+            var existingObj = AzureContainerInterface.GetObject(keys);
             if (!existingObj.HasObject)
                 return;
 
@@ -128,7 +128,7 @@ namespace Repository.Azure
         //===============================================================
         public override ObjectContext<T> Find(params object[] keys)
         {
-            var obj = AzureContainerInterface.GetObject<T>(keys);
+            var obj = AzureContainerInterface.GetObject(keys);
             if (!obj.HasObject)
                 return null;
 
@@ -142,7 +142,7 @@ namespace Repository.Azure
         //===============================================================
         public override EnumerableObjectContext<T> Items
         {
-            get { return new EnumerableObjectContext<T>(AzureContainerInterface.EnumerateObjects<T>().AsQueryable()); }
+            get { return new EnumerableObjectContext<T>(AzureContainerInterface.EnumerateObjects().AsQueryable()); }
         }
         //===============================================================
         public override void Dispose()
@@ -155,25 +155,25 @@ namespace Repository.Azure
     public class AzureRepository<TValue, TKey> : Repository<TValue, TKey> where TValue : class
     {
         //===============================================================
-        public AzureRepository(Func<TValue, TKey> keySelector, String connectionString, AzureOptions options = null)
+        public AzureRepository(Func<TValue, TKey> keySelector, String connectionString, AzureOptions<TValue> options = null)
             : base(new AzureRepository<TValue>(x => keySelector(x), connectionString, options))
         {}
         //===============================================================
-        internal AzureRepository(Func<TValue, TKey> keySelector, CloudStorageAccount storageAccount, AzureOptions options = null)
+        internal AzureRepository(Func<TValue, TKey> keySelector, CloudStorageAccount storageAccount, AzureOptions<TValue> options = null)
             : base(new AzureRepository<TValue>(x => new object[] { keySelector(x) }, storageAccount, options))
         {}
         //===============================================================
-        public static AzureRepository<TValue, TKey> CreateForStorageEmulator(Func<TValue, TKey> keySelector, AzureOptions options = null)
+        public static AzureRepository<TValue, TKey> CreateForStorageEmulator(Func<TValue, TKey> keySelector, AzureOptions<TValue> options = null)
         {
             return new AzureRepository<TValue, TKey>(keySelector, CloudStorageAccount.DevelopmentStorageAccount, options);
         }
         //===============================================================
-        public static AzureRepository<TValue, TKey> FromExplicitConnectionString(Func<TValue, TKey> keySelector, String connectionString, AzureOptions options = null)
+        public static AzureRepository<TValue, TKey> FromExplicitConnectionString(Func<TValue, TKey> keySelector, String connectionString, AzureOptions<TValue> options = null)
         {
             return new AzureRepository<TValue, TKey>(keySelector, connectionString, options);
         }
         //===============================================================
-        public static AzureRepository<TValue, TKey> FromNamedConnectionString(Func<TValue, TKey> keySelector, String connectionStringName, AzureOptions options = null)
+        public static AzureRepository<TValue, TKey> FromNamedConnectionString(Func<TValue, TKey> keySelector, String connectionStringName, AzureOptions<TValue> options = null)
         {
             var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
             return FromExplicitConnectionString(keySelector, connStr, options);
@@ -189,25 +189,25 @@ namespace Repository.Azure
     public class AzureRepository<TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2>
     {
         //===============================================================
-        public AzureRepository(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionString, AzureOptions options = null)
+        public AzureRepository(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionString, AzureOptions<TValue> options = null)
             : base(new AzureRepository<TValue>(x => new object[] { keySelector(x).Item1, keySelector(x).Item2 }, connectionString, options))
         { }
         //===============================================================
-        internal AzureRepository(Func<TValue, Tuple<TKey1, TKey2>> keySelector, CloudStorageAccount storageAccount, AzureOptions options = null)
+        internal AzureRepository(Func<TValue, Tuple<TKey1, TKey2>> keySelector, CloudStorageAccount storageAccount, AzureOptions<TValue> options = null)
             : base(new AzureRepository<TValue>(x => new object[] { keySelector(x).Item1, keySelector(x).Item2 }, storageAccount, options))
         { }
         //===============================================================
-        public static AzureRepository<TValue, TKey1, TKey2> CreateForStorageEmulator(Func<TValue, Tuple<TKey1, TKey2>> keySelector, AzureOptions options = null)
+        public static AzureRepository<TValue, TKey1, TKey2> CreateForStorageEmulator(Func<TValue, Tuple<TKey1, TKey2>> keySelector, AzureOptions<TValue> options = null)
         {
             return new AzureRepository<TValue, TKey1, TKey2>(keySelector, CloudStorageAccount.DevelopmentStorageAccount, options);
         }
         //===============================================================
-        public static AzureRepository<TValue, TKey1, TKey2> FromExplicitConnectionString(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionString, AzureOptions options = null)
+        public static AzureRepository<TValue, TKey1, TKey2> FromExplicitConnectionString(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionString, AzureOptions<TValue> options = null)
         {
             return new AzureRepository<TValue, TKey1, TKey2>(keySelector, connectionString, options);
         }
         //===============================================================
-        public static AzureRepository<TValue, TKey1, TKey2> FromNamedConnectionString(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionStringName, AzureOptions options = null)
+        public static AzureRepository<TValue, TKey1, TKey2> FromNamedConnectionString(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionStringName, AzureOptions<TValue> options = null)
         {
             var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
             return FromExplicitConnectionString(keySelector, connStr, options);
@@ -223,21 +223,21 @@ namespace Repository.Azure
     public class ExplicitKeyAzureRepository<TValue> : ExplicitKeyRepository<TValue>
     {
         //===============================================================
-        public ExplicitKeyAzureRepository(String connectionString, AzureOptions options = null)
+        public ExplicitKeyAzureRepository(String connectionString, AzureOptions<TValue> options = null)
             : base(new AzureRepository<TValue>(x => new object[] { }, connectionString, options))
         {}
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue> CreateForStorageEmulator(AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue> CreateForStorageEmulator(AzureOptions<TValue> options = null)
         {
             return new ExplicitKeyAzureRepository<TValue>(AzureUtility.EMULATOR_CONNECTION_STRING, options);
         }
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue> FromExplicitConnectionString(String connectionString, AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue> FromExplicitConnectionString(String connectionString, AzureOptions<TValue> options = null)
         {
             return new ExplicitKeyAzureRepository<TValue>(connectionString, options);
         }
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue> FromNamedConnectionString(String connectionStringName, AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue> FromNamedConnectionString(String connectionStringName, AzureOptions<TValue> options = null)
         {
             var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
             return FromExplicitConnectionString(connStr, options);
@@ -253,21 +253,21 @@ namespace Repository.Azure
     public class ExplicitKeyAzureRepository<TValue, TKey> : ExplicitKeyRepository<TValue, TKey>
     {
         //===============================================================
-        public ExplicitKeyAzureRepository(String connectionString, AzureOptions options = null)
+        public ExplicitKeyAzureRepository(String connectionString, AzureOptions<TValue> options = null)
             : base(new AzureRepository<TValue>(x => new object[] { }, connectionString, options))
         {}
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue, TKey> CreateForStorageEmulator(AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue, TKey> CreateForStorageEmulator(AzureOptions<TValue> options = null)
         {
             return new ExplicitKeyAzureRepository<TValue, TKey>(AzureUtility.EMULATOR_CONNECTION_STRING, options);
         }
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue, TKey> FromExplicitConnectionString(String connectionString, AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue, TKey> FromExplicitConnectionString(String connectionString, AzureOptions<TValue> options = null)
         {
             return new ExplicitKeyAzureRepository<TValue, TKey>(connectionString, options);
         }
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue, TKey> FromNamedConnectionString(String connectionStringName, AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue, TKey> FromNamedConnectionString(String connectionStringName, AzureOptions<TValue> options = null)
         {
             var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
             return FromExplicitConnectionString(connStr, options);
@@ -283,21 +283,21 @@ namespace Repository.Azure
     public class ExplicitKeyAzureRepository<TValue, TKey1, TKey2> : ExplicitKeyRepository<TValue, TKey1, TKey2>
     {
         //===============================================================
-        public ExplicitKeyAzureRepository(String connectionString, AzureOptions options = null)
+        public ExplicitKeyAzureRepository(String connectionString, AzureOptions<TValue> options = null)
             : base(new AzureRepository<TValue>(x => new object[] { }, connectionString, options))
         { }
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> CreateForStorageEmulator(AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> CreateForStorageEmulator(AzureOptions<TValue> options = null)
         {
             return new ExplicitKeyAzureRepository<TValue, TKey1, TKey2>(AzureUtility.EMULATOR_CONNECTION_STRING, options);
         }
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> FromExplicitConnectionString(String connectionString, AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> FromExplicitConnectionString(String connectionString, AzureOptions<TValue> options = null)
         {
             return new ExplicitKeyAzureRepository<TValue, TKey1, TKey2>(connectionString, options);
         }
         //===============================================================
-        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> FromNamedConnectionString(String connectionStringName, AzureOptions options = null)
+        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> FromNamedConnectionString(String connectionStringName, AzureOptions<TValue> options = null)
         {
             var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
             return FromExplicitConnectionString(connStr, options);

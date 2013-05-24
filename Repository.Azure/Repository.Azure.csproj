@@ -74,10 +74,14 @@
     <Compile Include="AzureContainerInterface.cs" />
     <Compile Include="AzureOptions.cs" />
     <Compile Include="AzureRepository.cs" />
+    <Compile Include="Serialization\Base64Encoder.cs" />
+    <Compile Include="Serialization\Encoder.cs" />
+    <Compile Include="Serialization\EncodingEncoder.cs" />
+    <Compile Include="Serialization\ISerializer.cs" />
+    <Compile Include="Serialization\NullSerializer.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="AzureUtility.cs" />
-    <Compile Include="ISerializer.cs" />
-    <Compile Include="JsonSerializer.cs" />
+    <Compile Include="Serialization\JsonSerializer.cs" />
     <Compile Include="Operations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -93,6 +97,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
