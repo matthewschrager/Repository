@@ -8,7 +8,7 @@ using Microsoft.WindowsAzure.Storage;
 
 namespace Repository.Azure
 {
-    internal class AzureInsert<T> : Insert<T> where T : class
+    internal class AzureInsert<T> : Insert<T>
     {
         //===============================================================
         public AzureInsert(IEnumerable<Object> keys, T value, AzureContainerInterface azureContainerInterface)

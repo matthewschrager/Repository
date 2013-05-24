@@ -16,6 +16,8 @@ namespace Repository.Azure
     internal static class AzureUtility
     {
         private static readonly char[] BannedCharacters = new[] { '<', '>', '\'', '[', ']', '`' };
+        public const String EMULATOR_CONNECTION_STRING = "UseDevelopmentStorage=true;";
+
         //===============================================================
         public static String SanitizeContainerName(String name)
         {

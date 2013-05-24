@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Repository
 {
-    public abstract class Repository<T> : IDisposable where T : class
+    public abstract class Repository<T> : IDisposable
     {
         //===============================================================
         protected Repository(Func<T, Object[]> keySelector)
@@ -67,6 +67,12 @@ namespace Repository
         public abstract EnumerableObjectContext<T> Items { get; }
         //===============================================================
         public abstract void Dispose();
+        //===============================================================
+        // This is only for use with ExplicitKeyRepository, which changes the key selector with each operation
+        internal void SetKeySelector(Func<T, object[]> keySelector)
+        {
+            KeySelector = keySelector;
+        }
         //===============================================================
     }
 }

@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExplicitKeyRepository.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="InMemoryRepository.cs" />
     <Compile Include="Tests.cs" />

@@ -174,7 +174,9 @@ namespace Repository.EntityFramework
         public override ObjectContext<TValue> Find(params Object[] keys)
         {
             var set = SetSelector(Context);
-            return new ObjectContext<TValue>(set.Find(keys));
+            var obj = set.Find(keys);
+
+            return obj != null ? new ObjectContext<TValue>(obj) : null;
         }
         //===============================================================
         public override EnumerableObjectContext<TValue> Items
@@ -185,13 +187,15 @@ namespace Repository.EntityFramework
         public override void Update<T>(T value, params Object[] keys)
         {
             var obj = Find(keys);
-            obj.Update(value);
+            if (obj != null)
+                obj.Update(value);
         }
         //===============================================================
         public override void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
         {
             var obj = Find(keys);
-            obj.Update(value, getter);
+            if (obj != null)
+                obj.Update(value, getter);
         }
         //===============================================================
         public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)

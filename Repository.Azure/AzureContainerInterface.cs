@@ -69,13 +69,13 @@ namespace Repository.Azure
             }
         }
         //===============================================================
-        public T GetObject<T>(IEnumerable<Object> keys) where T : class
+        public GetObjectResult<T> GetObject<T>(IEnumerable<Object> keys)
         {
             var block = GetBlock(keys);
             if (!block.Exists())
-                return null;
+                return new GetObjectResult<T>();
 
-            return DeserializeBlock<T>(block);
+            return new GetObjectResult<T>(DeserializeBlock<T>(block));
         }
         //===============================================================
         public void DeleteObject(IEnumerable<Object> keys)
@@ -106,6 +106,37 @@ namespace Repository.Azure
         {
             var block = GetBlock(keys);
             return block.Uri;
+        }
+        //===============================================================
+    }
+
+    internal class GetObjectResult<T>
+    {
+        private T mObject;
+
+        //===============================================================
+        public GetObjectResult()
+        {
+            HasObject = false;
+        }
+        //===============================================================
+        public GetObjectResult(T obj)
+        {
+            mObject = obj;
+            HasObject = true;
+        }
+        //===============================================================
+        public bool HasObject { get; private set; }
+        //===============================================================
+        public T Object
+        {
+            get
+            {
+                if (!HasObject)
+                    throw new InvalidOperationException("The result doesn't contain any object.");
+
+                return mObject;
+            }
         }
         //===============================================================
     }

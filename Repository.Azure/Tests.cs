@@ -58,8 +58,6 @@ namespace Repository.Azure
     [TestFixture]
     internal class Tests
     {
-        private static readonly String EmulatorConnectionString = "DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
-        
         //===============================================================
         private AzureRepository<TestObject, String> TestObjects(AzureOptions options = null)
         {
@@ -69,6 +67,16 @@ namespace Repository.Azure
         private AzureRepository<GenericTestObject<int>, String> GenericTestObjects(AzureOptions options = null)
         {
             return AzureRepository<GenericTestObject<int>, String>.CreateForStorageEmulator(x => x.Key1, options);
+        }
+        //===============================================================
+        private ExplicitKeyAzureRepository<TestObject, String> ExplicitKeyTestObjects(AzureOptions options = null)
+        {
+            return ExplicitKeyAzureRepository<TestObject, String>.CreateForStorageEmulator(options);
+        }
+        //===============================================================
+        private ExplicitKeyAzureRepository<String, String> Strings(AzureOptions options = null)
+        {
+            return ExplicitKeyAzureRepository<String, String>.CreateForStorageEmulator(options);
         }
         //===============================================================
         [Test]
@@ -89,7 +97,7 @@ namespace Repository.Azure
             testObjects.SaveChanges();
 
             storedObj = testObjects.Find(testObj.ID);
-            Assert.Null(storedObj.Object);
+            Assert.Null(storedObj);
 
             // Try with generic object
             var genericObjects = GenericTestObjects();
@@ -107,7 +115,7 @@ namespace Repository.Azure
             genericObjects.SaveChanges();
 
             storedGeneric = genericObjects.Find(genericObj.Key1);
-            Assert.Null(storedGeneric.Object);
+            Assert.Null(storedGeneric);
         }
         //===============================================================
         [Test]
@@ -128,6 +136,54 @@ namespace Repository.Azure
             repo.SaveChanges();
 
             Assert.AreEqual(0, repo.Items.Count());
+        }
+        //===============================================================
+        [Test]
+        public void ExplicitKeyRepository()
+        {
+            const string objectKey = "wrongKey";
+            const string explicitKey = "rightKey";
+            
+            var repo = ExplicitKeyTestObjects();
+            var testObject = new TestObject(objectKey, "myValue");
+
+            repo.Insert(testObject, explicitKey);
+            repo.SaveChanges();
+
+            var savedObj = repo.Find(objectKey);
+            Assert.Null(savedObj);
+
+            savedObj = repo.Find(explicitKey);
+            Assert.NotNull(savedObj);
+            Assert.AreEqual(testObject.ID, savedObj.Object.ID);
+            Assert.AreEqual(testObject.Value, savedObj.Object.Value);
+
+            repo.RemoveByKey(explicitKey);
+            repo.SaveChanges();
+
+            savedObj = repo.Find(explicitKey);
+            Assert.Null(savedObj);
+        }
+        //===============================================================
+        [Test]
+        public void NonComplexObject()
+        {
+            const string key = "myKey";
+            const string value = "myValue";
+            
+            var repo = Strings();
+            repo.Insert(value, key);
+            repo.SaveChanges();
+
+            var storedString = repo.Find(key);
+            Assert.NotNull(storedString);
+            Assert.AreEqual(value, storedString.Object);
+
+            repo.RemoveByKey(key);
+            repo.SaveChanges();
+
+            storedString = repo.Find(key);
+            Assert.Null(storedString);
         }
         //===============================================================
     }

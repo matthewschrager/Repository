@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Repository
 {
-    public class ObjectContext<T> where T : class
+    public class ObjectContext<T>
     {
         //===============================================================
         public ObjectContext(T obj)
@@ -30,7 +30,7 @@ namespace Repository
         //===============================================================
     }
 
-    public class EnumerableObjectContext<T> : IQueryable<T> where T : class
+    public class EnumerableObjectContext<T> : IQueryable<T>
     {
         private IQueryProvider mCachedQueryProvider = null;
 

@@ -6,34 +6,84 @@ using System.Threading.Tasks;
 
 namespace Repository
 {
-    public class Repository<TValue, TKey> : IDisposable
+    public class ExplicitKeyRepository<T> : IDisposable
     {
         //===============================================================
-        protected Repository(Repository<TValue> innerRepository)
+        public ExplicitKeyRepository(Repository<T> implicitKeyRepository)
         {
-            InnerRepository = innerRepository;
+            ImplicitKeyRepository = implicitKeyRepository;
         }
         //===============================================================
-        protected Repository<TValue> InnerRepository { get; private set; }
+        protected Repository<T> ImplicitKeyRepository { get; set; }
         //===============================================================
-        public void Insert(TValue value)
+        public void Insert(T value, params object[] keys)
         {
-            InnerRepository.Insert(value);
+            ImplicitKeyRepository.SetKeySelector(x => keys);
+            ImplicitKeyRepository.Insert(value);
         }
         //===============================================================
-        public void Insert(IEnumerable<TValue> values)
+        public void Insert(IEnumerable<Tuple<object[], T>> values)
         {
-            InnerRepository.Insert(values);
+            foreach (var value in values)
+                Insert(value.Item2, value.Item1);
         }
         //===============================================================
-        public void Remove(TValue obj)
+        public void RemoveByKey(params object[] keys)
         {
-            InnerRepository.Remove(obj);
+            ImplicitKeyRepository.RemoveByKey(keys);
         }
         //===============================================================
-        public void RemoveAll(IEnumerable<TValue> objects = null)
+        public void RemoveAllByKey(IEnumerable<object[]> keys)
         {
-            InnerRepository.RemoveAll(objects);
+            foreach (var key in keys)
+                RemoveByKey(key);
+        }
+        //===============================================================
+        public void SaveChanges()
+        {
+            ImplicitKeyRepository.SaveChanges();
+        }
+        //===============================================================
+        public bool ExistsByKey(params object[] keys)
+        {
+            return ImplicitKeyRepository.ExistsByKey(keys);
+        }
+        //===============================================================
+        public ObjectContext<T> Find(params object[] keys)
+        {
+            return ImplicitKeyRepository.Find(keys);
+        }
+        //===============================================================
+        public EnumerableObjectContext<T> Items
+        {
+            get { return ImplicitKeyRepository.Items; }
+        }
+        //===============================================================
+        public void Dispose()
+        {
+            ImplicitKeyRepository.Dispose();
+        }
+        //===============================================================
+    }
+
+    public class ExplicitKeyRepository<TValue, TKey> : IDisposable
+    {
+        //===============================================================
+        protected ExplicitKeyRepository(Repository<TValue> innerRepository)
+        {
+            InnerRepository = new ExplicitKeyRepository<TValue>(innerRepository);
+        }
+        //===============================================================
+        protected ExplicitKeyRepository<TValue> InnerRepository { get; private set; }
+        //===============================================================
+        public void Insert(TValue value, TKey key)
+        {
+            InnerRepository.Insert(value, key);
+        }
+        //===============================================================
+        public void Insert(IEnumerable<Tuple<TKey, TValue>> values)
+        {
+            InnerRepository.Insert(values.Select(x => Tuple.Create(new object[] { x.Item1 }, x.Item2)));
         }
         //===============================================================
         public void RemoveByKey(TKey key)
@@ -51,34 +101,9 @@ namespace Repository
             InnerRepository.SaveChanges();
         }
         //===============================================================
-        public bool Exists(TValue obj)
-        {
-            return InnerRepository.Exists(obj);
-        }
-        //===============================================================
         public bool ExistsByKey(TKey key)
         {
             return InnerRepository.ExistsByKey(key);
-        }
-        //===============================================================
-        public void Update<TUpdate>(TKey key, TUpdate updateObj)
-        {
-            InnerRepository.Update(updateObj, key);
-        }
-        //===============================================================
-        public void Update<TUpdate, TProperty>(TKey key, TUpdate updateObj, Func<TValue, TProperty> getter)
-        {
-            InnerRepository.Update(updateObj, getter, key);
-        }
-        //===============================================================
-        public void Update(TKey key, String json, UpdateType updateType)
-        {
-            InnerRepository.Update(json, updateType, key);
-        }
-        //===============================================================
-        public void Update(TKey key, String pathToProperty, String json, UpdateType updateType)
-        {
-            InnerRepository.Update(pathToProperty, json, updateType, key);
         }
         //===============================================================
         public ObjectContext<TValue> Find(TKey key)
@@ -96,36 +121,27 @@ namespace Repository
             InnerRepository.Dispose();
         }
         //===============================================================
+
     }
 
-    public class Repository<TValue, TKey1, TKey2> : IDisposable
+    public class ExplicitKeyRepository<TValue, TKey1, TKey2> : IDisposable
     {
         //===============================================================
-        protected Repository(Repository<TValue> innerRepository)
+        protected ExplicitKeyRepository(Repository<TValue> innerRepository)
         {
-            InnerRepository = innerRepository;
+            InnerRepository = new ExplicitKeyRepository<TValue>(innerRepository);
         }
         //===============================================================
-        protected Repository<TValue> InnerRepository { get; private set; }
+        protected ExplicitKeyRepository<TValue> InnerRepository { get; private set; }
         //===============================================================
-        public void Insert(TValue value)
+        public void Insert(TValue value, TKey1 key1, TKey2 key2)
         {
-            InnerRepository.Insert(value);
+            InnerRepository.Insert(value, key1, key2);
         }
         //===============================================================
-        public void Insert(IEnumerable<TValue> values)
+        public void Insert(IEnumerable<Tuple<TKey1, TKey2, TValue>> values)
         {
-            InnerRepository.Insert(values);
-        }
-        //===============================================================
-        public void Remove(TValue obj)
-        {
-            InnerRepository.Remove(obj);
-        }
-        //===============================================================
-        public void RemoveAll(IEnumerable<TValue> objects)
-        {
-            InnerRepository.RemoveAll(objects);
+            InnerRepository.Insert(values.Select(x => Tuple.Create(new object[] { x.Item1, x.Item2 }, x.Item3)));
         }
         //===============================================================
         public void RemoveByKey(TKey1 key1, TKey2 key2)
@@ -143,34 +159,9 @@ namespace Repository
             InnerRepository.SaveChanges();
         }
         //===============================================================
-        public bool Exists(TValue obj)
-        {
-            return InnerRepository.Exists(obj);
-        }
-        //===============================================================
         public bool ExistsByKey(TKey1 key1, TKey2 key2)
         {
             return InnerRepository.ExistsByKey(key1, key2);
-        }
-        //===============================================================
-        public void Update<TUpdate>(TKey1 key1, TKey2 key2, TUpdate updateObj)
-        {
-            InnerRepository.Update(updateObj, key1, key2);
-        }
-        //===============================================================
-        public void Update<TUpdate, TProperty>(TKey1 key1, TKey2 key2, TUpdate updateObj, Func<TValue, TProperty> getter)
-        {
-            InnerRepository.Update(updateObj, getter, key1, key2);
-        }
-        //===============================================================
-        public void Update(TKey1 key1, TKey2 key2, String json, UpdateType updateType)
-        {
-            InnerRepository.Update(json, updateType, key1, key2);
-        }
-        //===============================================================
-        public void Update(TKey1 key1, TKey2 key2, String pathToProperty, String json, UpdateType updateType)
-        {
-            InnerRepository.Update(pathToProperty, json, updateType, key1, key2);
         }
         //===============================================================
         public ObjectContext<TValue> Find(TKey1 key1, TKey2 key2)
@@ -188,5 +179,6 @@ namespace Repository
             InnerRepository.Dispose();
         }
         //===============================================================
+
     }
 }

@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 
 namespace Repository.Azure
 {
-    public class AzureRepository<T> : Repository.Repository<T> where T : class
+    public class AzureRepository<T> : Repository.Repository<T>
     {
         //===============================================================
         public AzureRepository(Func<T, object> keySelector, String connectionString, AzureOptions options = null)
@@ -101,13 +101,19 @@ namespace Repository.Azure
         public override void Update<TValue>(TValue value, params object[] keys)
         {
             var existingObj = AzureContainerInterface.GetObject<T>(keys);
-            PendingChanges.Add(new AzureModify<T>(existingObj, keys, x => AutoMapper.Mapper.DynamicMap(value, x), AzureContainerInterface));
+            if (!existingObj.HasObject)
+                return;
+
+            PendingChanges.Add(new AzureModify<T>(existingObj.Object, keys, x => AutoMapper.Mapper.DynamicMap(value, x), AzureContainerInterface));
         }
         //===============================================================
         public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params object[] keys)
         {
             var existingObj = AzureContainerInterface.GetObject<T>(keys);
-            PendingChanges.Add(new AzureModify<T>(existingObj, keys, x => AutoMapper.Mapper.DynamicMap(value, getter(x)), AzureContainerInterface));
+            if (!existingObj.HasObject)
+                return;
+
+            PendingChanges.Add(new AzureModify<T>(existingObj.Object, keys, x => AutoMapper.Mapper.DynamicMap(value, getter(x)), AzureContainerInterface));
         }
         //===============================================================
         public override void Update(string json, UpdateType updateType, params object[] keys)
@@ -123,7 +129,10 @@ namespace Repository.Azure
         public override ObjectContext<T> Find(params object[] keys)
         {
             var obj = AzureContainerInterface.GetObject<T>(keys);
-            return new ObjectContext<T>(obj);
+            if (!obj.HasObject)
+                return null;
+
+            return new ObjectContext<T>(obj.Object);
         }
         //===============================================================
         public Uri GetObjectUri(params Object[] keys)
@@ -177,7 +186,7 @@ namespace Repository.Azure
         //===============================================================
     }
 
-    public class AzureRepository<TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2> where TValue : class
+    public class AzureRepository<TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2>
     {
         //===============================================================
         public AzureRepository(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionString, AzureOptions options = null)
@@ -207,6 +216,96 @@ namespace Repository.Azure
         public Uri GetObjectUri(TKey1 key1, TKey2 key2)
         {
             return (InnerRepository as AzureRepository<TValue>).GetObjectUri(key1, key2);
+        }
+        //===============================================================
+    }
+
+    public class ExplicitKeyAzureRepository<TValue> : ExplicitKeyRepository<TValue>
+    {
+        //===============================================================
+        public ExplicitKeyAzureRepository(String connectionString, AzureOptions options = null)
+            : base(new AzureRepository<TValue>(x => new object[] { }, connectionString, options))
+        {}
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue> CreateForStorageEmulator(AzureOptions options = null)
+        {
+            return new ExplicitKeyAzureRepository<TValue>(AzureUtility.EMULATOR_CONNECTION_STRING, options);
+        }
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue> FromExplicitConnectionString(String connectionString, AzureOptions options = null)
+        {
+            return new ExplicitKeyAzureRepository<TValue>(connectionString, options);
+        }
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue> FromNamedConnectionString(String connectionStringName, AzureOptions options = null)
+        {
+            var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
+            return FromExplicitConnectionString(connStr, options);
+        }
+        //===============================================================
+        public Uri GetObjectUri(params object[] keys)
+        {
+            return (ImplicitKeyRepository as AzureRepository<TValue>).GetObjectUri(keys);
+        }
+        //===============================================================
+    }
+
+    public class ExplicitKeyAzureRepository<TValue, TKey> : ExplicitKeyRepository<TValue, TKey>
+    {
+        //===============================================================
+        public ExplicitKeyAzureRepository(String connectionString, AzureOptions options = null)
+            : base(new AzureRepository<TValue>(x => new object[] { }, connectionString, options))
+        {}
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue, TKey> CreateForStorageEmulator(AzureOptions options = null)
+        {
+            return new ExplicitKeyAzureRepository<TValue, TKey>(AzureUtility.EMULATOR_CONNECTION_STRING, options);
+        }
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue, TKey> FromExplicitConnectionString(String connectionString, AzureOptions options = null)
+        {
+            return new ExplicitKeyAzureRepository<TValue, TKey>(connectionString, options);
+        }
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue, TKey> FromNamedConnectionString(String connectionStringName, AzureOptions options = null)
+        {
+            var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
+            return FromExplicitConnectionString(connStr, options);
+        }
+        //===============================================================
+        public Uri GetObjectUri(params object[] keys)
+        {
+            return (InnerRepository as ExplicitKeyAzureRepository<TValue>).GetObjectUri(keys);
+        }
+        //===============================================================
+    }
+
+    public class ExplicitKeyAzureRepository<TValue, TKey1, TKey2> : ExplicitKeyRepository<TValue, TKey1, TKey2>
+    {
+        //===============================================================
+        public ExplicitKeyAzureRepository(String connectionString, AzureOptions options = null)
+            : base(new AzureRepository<TValue>(x => new object[] { }, connectionString, options))
+        { }
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> CreateForStorageEmulator(AzureOptions options = null)
+        {
+            return new ExplicitKeyAzureRepository<TValue, TKey1, TKey2>(AzureUtility.EMULATOR_CONNECTION_STRING, options);
+        }
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> FromExplicitConnectionString(String connectionString, AzureOptions options = null)
+        {
+            return new ExplicitKeyAzureRepository<TValue, TKey1, TKey2>(connectionString, options);
+        }
+        //===============================================================
+        public static ExplicitKeyAzureRepository<TValue, TKey1, TKey2> FromNamedConnectionString(String connectionStringName, AzureOptions options = null)
+        {
+            var connStr = AzureUtility.GetNamedConnectionString(connectionStringName);
+            return FromExplicitConnectionString(connStr, options);
+        }
+        //===============================================================
+        public Uri GetObjectUri(params object[] keys)
+        {
+            return (InnerRepository as ExplicitKeyAzureRepository<TValue>).GetObjectUri(keys);
         }
         //===============================================================
     }
