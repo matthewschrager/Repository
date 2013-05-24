@@ -14,7 +14,7 @@ namespace Repository
             ImplicitKeyRepository = implicitKeyRepository;
         }
         //===============================================================
-        protected Repository<T> ImplicitKeyRepository { get; set; }
+        public Repository<T> ImplicitKeyRepository { get; private set; }
         //===============================================================
         public void Insert(T value, params object[] keys)
         {
@@ -74,7 +74,7 @@ namespace Repository
             InnerRepository = new ExplicitKeyRepository<TValue>(innerRepository);
         }
         //===============================================================
-        protected ExplicitKeyRepository<TValue> InnerRepository { get; private set; }
+        public ExplicitKeyRepository<TValue> InnerRepository { get; private set; }
         //===============================================================
         public void Insert(TValue value, TKey key)
         {
@@ -132,7 +132,7 @@ namespace Repository
             InnerRepository = new ExplicitKeyRepository<TValue>(innerRepository);
         }
         //===============================================================
-        protected ExplicitKeyRepository<TValue> InnerRepository { get; private set; }
+        public ExplicitKeyRepository<TValue> InnerRepository { get; private set; }
         //===============================================================
         public void Insert(TValue value, TKey1 key1, TKey2 key2)
         {

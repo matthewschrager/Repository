@@ -273,9 +273,9 @@ namespace Repository.Azure
             return FromExplicitConnectionString(connStr, options);
         }
         //===============================================================
-        public Uri GetObjectUri(params object[] keys)
+        public Uri GetObjectUri(TKey key)
         {
-            return (InnerRepository as ExplicitKeyAzureRepository<TValue>).GetObjectUri(keys);
+            return (InnerRepository.ImplicitKeyRepository as AzureRepository<TValue>).GetObjectUri(key);
         }
         //===============================================================
     }
@@ -303,9 +303,9 @@ namespace Repository.Azure
             return FromExplicitConnectionString(connStr, options);
         }
         //===============================================================
-        public Uri GetObjectUri(params object[] keys)
+        public Uri GetObjectUri(TKey1 key1, TKey2 key2)
         {
-            return (InnerRepository as ExplicitKeyAzureRepository<TValue>).GetObjectUri(keys);
+            return (InnerRepository.ImplicitKeyRepository as AzureRepository<TValue>).GetObjectUri(key1, key2);
         }
         //===============================================================
     }

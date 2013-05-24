@@ -186,5 +186,12 @@ namespace Repository.Azure
             Assert.Null(storedString);
         }
         //===============================================================
+        [Test]
+        public void ExplicitKeyRepositoryGetObjectUri()
+        {
+            var repo = ExplicitKeyTestObjects();
+            repo.GetObjectUri("testKey");
+        }
+        //===============================================================
     }
 }
