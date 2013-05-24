@@ -6,9 +6,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using NUnit.Framework;
 using Newtonsoft.Json;
 
 namespace Repository.Azure
@@ -40,14 +39,36 @@ namespace Repository.Azure
             PendingChanges = new List<IPendingChange>();
         }
         //===============================================================
-        public static AzureRepository<T> CreateForStorageEmulator(Func<T, object[]> keySelector)
+        public static AzureRepository<T> FromExplicitConnectionString(Func<T, object[]> keySelector, String connectionString)
+        {
+            return new AzureRepository<T>(keySelector, connectionString);
+        }
+        //===============================================================
+        public static AzureRepository<T> FromExplicitConnectionString(Func<T, object> keySelector, String connectionString)
+        {
+            return new AzureRepository<T>(keySelector, connectionString);
+        }
+        //===============================================================
+        public static AzureRepository<T> FromNamedConnectionString(Func<T, object[]> keySelector, String connectionStringName)
+        {
+            var connStr = CloudConfigurationManager.GetSetting(connectionStringName);
+            return FromExplicitConnectionString(keySelector, connStr);
+        }
+        //===============================================================
+        public static AzureRepository<T> FromNamedConnectionString(Func<T, object> keySelector, String connectionStringName)
+        {
+            var connStr = CloudConfigurationManager.GetSetting(connectionStringName);
+            return FromExplicitConnectionString(keySelector, connStr);
+        }
+        //===============================================================
+        public static AzureRepository<T> ForStorageEmulator(Func<T, object[]> keySelector)
         {
             return new AzureRepository<T>(keySelector, CloudStorageAccount.DevelopmentStorageAccount);
         }
         //===============================================================
-        public static AzureRepository<T> CreateForStorageEmulator(Func<T, object> keySelector)
+        public static AzureRepository<T> ForStorageEmulator(Func<T, object> keySelector)
         {
-            return CreateForStorageEmulator(x => new[] { keySelector(x) });
+            return ForStorageEmulator(x => new[] { keySelector(x) });
         }
         //===============================================================
         private String ContainerName { get; set; }

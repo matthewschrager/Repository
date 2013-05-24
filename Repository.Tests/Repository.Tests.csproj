@@ -39,13 +39,15 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Repository.EntityFramework\bin\Debug\EntityFramework.dll</HintPath>
     </Reference>
-    <Reference Include="Repository.EntityFramework, Version=1.0.3.19, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="nunit.framework, Version=2.6.2.12296, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Repository.Sandbox\bin\Debug\Repository.EntityFramework.dll</HintPath>
+      <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Transactions" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -65,6 +67,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Repository.Azure\Repository.Azure.csproj">
+      <Project>{e609a74d-9b8e-4629-b1f3-22d710d1861a}</Project>
+      <Name>Repository.Azure</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Repository.EntityFramework\Repository.EntityFramework.csproj">
+      <Project>{e6875049-be49-44b0-9a4b-6b3571375cc6}</Project>
+      <Name>Repository.EntityFramework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Repository\Repository.csproj">
+      <Project>{3f3c814e-62ad-4065-8e75-068607d5bb69}</Project>
+      <Name>Repository</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

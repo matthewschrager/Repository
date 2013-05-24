@@ -1,12 +1,30 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace Repository.Azure
 {
+    [TestFixture]
+    internal class AzureUtilityTests
+    {
+        private class TestObject<T>
+        {
+            public T Value = default(T);
+        }
+
+        //===============================================================
+        [Test]
+        public void GetSanitizedContainerName()
+        {
+            // Ensure no conflicts
+            var firstName = AzureUtility.GetSanitizedContainerName<TestObject<int>>();
+            var secondName = AzureUtility.GetSanitizedContainerName<TestObject<double>>();
+
+            Assert.AreNotEqual(firstName, secondName);
+        }
+        //===============================================================
+    }
+
     internal class TestObject
     {
         //===============================================================

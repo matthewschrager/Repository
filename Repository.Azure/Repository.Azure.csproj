@@ -71,12 +71,12 @@
   <ItemGroup>
     <Compile Include="AzureApi.cs" />
     <Compile Include="AzureRepository.cs" />
+    <Compile Include="Tests.cs" />
     <Compile Include="AzureUtility.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="JsonSerializer.cs" />
     <Compile Include="Operations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Repository\Repository.csproj">
