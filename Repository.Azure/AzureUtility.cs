@@ -13,18 +13,15 @@ namespace Repository.Azure
 
     internal static class AzureUtility
     {
+        private static readonly char[] BannedCharacters = new[] { '<', '>', '\'', '[', ']', '`' };
         //===============================================================
-        public static String GetSanitizedContainerName(Type type)
+        public static String SanitizeContainerName(String name)
         {
-            var bannedCharacters = new[] { '<', '>', '\'', '[', ']', '`' };
-            var name = type.Name.ToLower();
-
-            // Handle generic args
-            if (type.GenericTypeArguments.Any())
-                name = type.GenericTypeArguments.Aggregate(name, (current, t) => current + ("-" + GetSanitizedContainerName(t)));
+            // Must be lowercase
+            name = name.ToLower();
 
             // Can only be alphanumeric and '-'
-            name = bannedCharacters.Aggregate(name, (current, character) => current.Replace(character, '-'));
+            name = BannedCharacters.Aggregate(name, (current, character) => current.Replace(character, '-'));
 
             // Can't have two '-' in a row
             while (name.Contains("--"))
@@ -37,6 +34,17 @@ namespace Repository.Azure
                 name = name + "-1";
 
             return name;
+        }
+        //===============================================================
+        public static String GetSanitizedContainerName(Type type)
+        {
+            var name = type.Name;
+
+            // Handle generic args
+            if (type.GenericTypeArguments.Any())
+                name = type.GenericTypeArguments.Aggregate(name, (current, t) => current + ("-" + GetSanitizedContainerName(t)));
+
+            return SanitizeContainerName(name);
         }
         //===============================================================
         public static String GetSanitizedContainerName<TValue>()
