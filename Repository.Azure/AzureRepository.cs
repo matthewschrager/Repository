@@ -161,6 +161,17 @@ namespace Repository.Azure
             return new AzureRepository<TValue, TKey>(keySelector, CloudStorageAccount.DevelopmentStorageAccount);
         }
         //===============================================================
+        public static AzureRepository<TValue, TKey> FromExplicitConnectionString(Func<TValue, TKey> keySelector, String connectionString)
+        {
+            return new AzureRepository<TValue, TKey>(keySelector, connectionString);
+        }
+        //===============================================================
+        public static AzureRepository<TValue, TKey> FromNamedConnectionString(Func<TValue, TKey> keySelector, String connectionStringName)
+        {
+            var connStr = CloudConfigurationManager.GetSetting(connectionStringName);
+            return FromExplicitConnectionString(keySelector, connStr);
+        }
+        //===============================================================
         public Uri GetObjectUri(TKey key)
         {
             return (InnerRepository as AzureRepository<TValue>).GetObjectUri(key);
@@ -182,6 +193,17 @@ namespace Repository.Azure
         public static AzureRepository<TValue, TKey1, TKey2> CreateForStorageEmulator(Func<TValue, Tuple<TKey1, TKey2>> keySelector)
         {
             return new AzureRepository<TValue, TKey1, TKey2>(keySelector, CloudStorageAccount.DevelopmentStorageAccount);
+        }
+        //===============================================================
+        public static AzureRepository<TValue, TKey1, TKey2> FromExplicitConnectionString(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionString)
+        {
+            return new AzureRepository<TValue, TKey1, TKey2>(keySelector, connectionString);
+        }
+        //===============================================================
+        public static AzureRepository<TValue, TKey1, TKey2> FromNamedConnectionString(Func<TValue, Tuple<TKey1, TKey2>> keySelector, String connectionStringName)
+        {
+            var connStr = CloudConfigurationManager.GetSetting(connectionStringName);
+            return FromExplicitConnectionString(keySelector, connStr);
         }
         //===============================================================
         public Uri GetObjectUri(TKey1 key1, TKey2 key2)
