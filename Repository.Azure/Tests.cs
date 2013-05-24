@@ -118,14 +118,14 @@ namespace Repository.Azure
         public void Items()
         {
             var repo = TestObjects();
-            var testObjects = Enumerable.Range(0, 100).Select(x => new TestObject(x.ToString(), x.ToString()));
+            var testObjects = Enumerable.Range(0, 10).Select(x => new TestObject(x.ToString(), x.ToString()));
 
             repo.Insert(testObjects);
             repo.SaveChanges();
 
             var items = repo.Items.ToList().OrderBy(x => int.Parse(x.Value)).ToList();
-            Assert.AreEqual(100, items.Count);
-            for (int i = 0; i < 100; ++i)
+            Assert.AreEqual(10, items.Count);
+            for (int i = 0; i < 10; ++i)
                 Assert.AreEqual(i.ToString(), items[i].Value);
 
             repo.RemoveAll();
