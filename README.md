@@ -140,7 +140,7 @@ using (var repository = new MyConcreteRepository<MyClass>())
 Typed Key Repositories
 ==========================
 Stored objects are accessed by their keys, as in the examples above. Normally, keys are passed into ```Repository``` methods as untyped ```params``` arguments; as a result,
-the compiler will not perform any checks for either the number of types of keys passed in. This allows for flexibility in the types of keys you can use,
+the compiler will not perform any checks for either the number or types of keys passed in. This allows for flexibility in the types of keys you can use,
 but also negates some of the benefits of having a strongly-typed generic repository in the first place. 
 
 In order to fix this potential problem, this library contains a series of ```Repository``` base classes that take type parameters for keys. These classes
@@ -190,8 +190,8 @@ which can be very handy.
 EFRepository 
 ==============
 
-In order to create an instance of EFRepository, you need to first declare a derived class of 
-[DbContext](http://msdn.microsoft.com/en-us/library/system.data.entity.dbcontext(v=vs.103).aspx)
+In order to create an instance of ```EFRepository```, you need to first declare a derived class of 
+[DbContext](http://msdn.microsoft.com/en-us/library/gg679505.aspx)
 with ```DbSet``` instances for all of the types for which you want to have repositories. An example ```DbContext``` might look like this:
 
 ```C#
