@@ -15,13 +15,19 @@ namespace Repository.Azure
 {
     public class AzureRepository<T> : Repository.Repository<T> where T : class
     {
+        private static readonly String[] EmulatorConnectionStrings = new[]
+        {
+            "UseDevelopmentStorage=true",
+            "DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;"
+        };
+
         //===============================================================
         public AzureRepository(Func<T, object> keySelector, String connectionString)
             : this(x => new[] { keySelector(x) }, connectionString)
         {}
         //===============================================================
         public AzureRepository(Func<T, object[]> keySelector, String connectionString)
-            : this(keySelector, CloudStorageAccount.Parse(connectionString))
+            : this(keySelector, EmulatorConnectionStrings.Contains(connectionString) ? CloudStorageAccount.DevelopmentStorageAccount : CloudStorageAccount.Parse(connectionString))
         {
             ConnectionString = connectionString;
         }
