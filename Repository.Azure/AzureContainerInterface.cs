@@ -38,6 +38,9 @@ namespace Repository.Azure
             var client = StorageAccount.CreateCloudBlobClient();
             var container = client.GetContainerReference(Options.ContainerName);
             container.CreateIfNotExists();
+            
+            if (Options.Permissions != null)
+                container.SetPermissions(Options.Permissions);
 
             return container;
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.WindowsAzure.Storage.Blob;
 using Repository.Azure.Serialization;
 
 namespace Repository.Azure
@@ -20,6 +21,8 @@ namespace Repository.Azure
         public String ContainerName { get; set; }
         //===============================================================
         public String ContentType { get; set; }
+        //===============================================================
+        public BlobContainerPermissions Permissions { get; set; }
         //===============================================================
     }
 }
