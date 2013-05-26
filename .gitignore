@@ -28,3 +28,6 @@ _ReSharper*/
 *.vsmdi
 *.testsettings
 *.nupkg
+Repository.RavenDB
+Repository.UnitTests
+Repository.Tests
