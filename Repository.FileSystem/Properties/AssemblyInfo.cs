@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Repository.FileSystem")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("An implementation of the generic repository pattern for filesystems.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Matthew Schrager")]
 [assembly: AssemblyProduct("Repository.FileSystem")]
-[assembly: AssemblyCopyright("Copyright ©  2013")]
+[assembly: AssemblyCopyright("Copyright © Matthew Schrager 2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

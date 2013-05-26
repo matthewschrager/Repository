@@ -8,9 +8,11 @@ an ```IQueryable<T>``` which can be used to perform LINQ queries on the reposito
 Implementations
 ================
 
-This (code) repository comes with a few Repository implementations. The first and simplest is ```InMemoryRepository```, which acts as a temporary in-memory store useful mainly for testing. The second is
-an Entity Framework repository named ```EFRepository```, which uses [Entity Framework](http://msdn.microsoft.com/en-us/data/ef.aspx) as its storage interface. The last is ```AzureRepository```, 
-an implementation of ```Repository``` for [Azure Blob Storage](http://www.windowsazure.com/en-us/manage/services/storage/).
+This (code) repository comes with a few Repository implementations. The first and simplest is ```InMemoryRepository```, which acts as a temporary in-memory store useful mainly for testing. 
+The second is an Entity Framework repository named ```EFRepository```, which uses [Entity Framework](http://msdn.microsoft.com/en-us/data/ef.aspx) as its 
+storage interface. The thid is ```AzureRepository```, an implementation of ```Repository``` for [Azure Blob Storage](http://www.windowsazure.com/en-us/manage/services/storage/).
+And the fourth is ```FileSystemRepository```, an implementation that serializes objects directly to the filesystem.
+
 
 Pull requests for additional implementations (and improvements to existing ones) are welcome and encouraged.
 
