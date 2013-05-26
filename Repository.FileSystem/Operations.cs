@@ -1,81 +1,79 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
 
-namespace Repository.Azure
+namespace Repository.FileSystem
 {
-    internal class AzureInsert<T> : Insert<T>
+    internal class FileSystemInsert<T> : Insert<T>
     {
         //===============================================================
-        public AzureInsert(IEnumerable<Object> keys, T value, AzureContainerInterface<T> azureContainerInterface)
+        public FileSystemInsert(IEnumerable<object> keys, T value, FileSystemInterface<T> fsInterface)
             : base(keys, value)
         {
-            AzureContainerInterface = azureContainerInterface;
+            FileSystemInterface = fsInterface;
         }
         //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        private FileSystemInterface<T> FileSystemInterface { get; set; }
         //===============================================================
         public override void Apply()
         {
-            AzureContainerInterface.StoreObject(Value, Keys);
+            FileSystemInterface.StoreObject(Value, Keys);
         }
         //===============================================================
     }
 
-    internal class AzureRemove<T> : Remove
+    internal class FileSystemRemove<T> : Remove
     {
         //===============================================================
-        public AzureRemove(IEnumerable<Object> keys, AzureContainerInterface<T> azureContainerInterface)
+        public FileSystemRemove(IEnumerable<object> keys, FileSystemInterface<T> fsInterface)
             : base(keys)
         {
-            AzureContainerInterface = azureContainerInterface;
+            FileSystemInterface = fsInterface;
         }
         //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        private FileSystemInterface<T> FileSystemInterface { get; set; }
         //===============================================================
         public override void Apply()
         {
-            AzureContainerInterface.DeleteObject(Keys);
+            FileSystemInterface.DeleteObject(Keys);
         }
         //===============================================================
     }
 
-    internal class AzureRemoveAll<T> : Operation
+    internal class FileSystemRemoveAll<T> : Operation
     {
         //===============================================================
-        public AzureRemoveAll(AzureContainerInterface<T> azureContainerInterface)
+        public FileSystemRemoveAll(FileSystemInterface<T> fsInterface)
         {
-            AzureContainerInterface = azureContainerInterface;
+            FileSystemInterface = fsInterface;
         }
         //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        private FileSystemInterface<T> FileSystemInterface { get; set; }
         //===============================================================
         public void Apply()
         {
-            AzureContainerInterface.DeleteContainer();
+            FileSystemInterface.DeleteFolder();
         }
         //===============================================================
     }
 
-    internal class AzureModify<T> : Modify<T>
+    internal class FileSystemModify<T> : Modify<T>
     {
         //===============================================================
-        public AzureModify(T value, IEnumerable<Object> keys, Action<T> modifier, AzureContainerInterface<T> azureContainerInterface)
+        public FileSystemModify(IEnumerable<object> keys, T value, Action<T> modifier, FileSystemInterface<T> fsInterface)
             : base(keys, value, modifier)
         {
-            AzureContainerInterface = azureContainerInterface;
+            FileSystemInterface = fsInterface;
         }
         //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        private FileSystemInterface<T> FileSystemInterface { get; set; }
         //===============================================================
         public override void Apply()
         {
             Modifier(Value);
-            AzureContainerInterface.StoreObject(Value, Keys);
+            FileSystemInterface.StoreObject(Value, Keys);
         }
         //===============================================================
     }

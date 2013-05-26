@@ -5,75 +5,11 @@ using System.Linq;
 
 namespace Repository.EntityFramework
 {
-    internal class EFInsert<TValue> : Insert<TValue> where TValue : class
-    {
-        //===============================================================
-        public EFInsert(IEnumerable<Object> keys, TValue value, DbSet<TValue> set)
-            : base(keys, value)
-        {
-            DbSet = set;
-        }
-        //===============================================================
-        private DbSet<TValue> DbSet { get; set; }
-        //===============================================================
-        public override void Apply()
-        {
-            DbSet.Add(Value);
-        }
-        //===============================================================
-    }
-
-    internal class EFRemove<TValue> : Remove where TValue : class
-    {
-        //===============================================================
-        public EFRemove(IEnumerable<Object> keys, DbSet<TValue> dbSet)
-            : base(keys)
-        {
-            DbSet = dbSet;
-        }
-        //===============================================================
-        private DbSet<TValue> DbSet { get; set; }
-        //===============================================================
-        public override void Apply()
-        {
-            var obj = DbSet.Find(Keys.ToArray());
-            DbSet.Remove(obj);
-        }
-        //===============================================================
-    }
-
-    internal class EFRemoveAll<TValue, TContext> : IPendingChange where TContext : DbContext where TValue : class
-    {
-        //===============================================================
-        public EFRemoveAll(TContext context)
-        {
-            Context = context;
-        }
-        //===============================================================
-        private TContext Context { get; set; }
-        //===============================================================
-        public void Apply()
-        {
-            var tableName = Context.GetTableName<TValue>();
-            tableName = tableName.Replace("[dbo].", "").Replace("[", "").Replace("]", "");
-            var query = "DELETE FROM " + tableName;
-
-            Context.Database.ExecuteSqlCommand(query);
-        }
-        //===============================================================
-    }
-
-
     public class EFRepository<TContext, TValue> : Repository<TValue> where TValue : class where TContext : DbContext
     {
-        // We have to keep track of pending changes manually because RemoveAll is done via a straight SQL command, which will
-        // execute immediately. Since the semantics of Repository are such that nothing is committed until SaveChanges is called, we have to
-        // keep track of all changes manually and apply them on SaveChanges
-        private List<IPendingChange> mPendingChanges = new List<IPendingChange>();
-
         //===============================================================
         public EFRepository(Func<TContext, DbSet<TValue>> setSelector, TContext context = null)
-            : base(GetKeySelector(context))
+            : base(GetKeySelector(context), true)
         {
             OwnsContext = false;
 
@@ -117,53 +53,28 @@ namespace Repository.EntityFramework
 
         }
         //===============================================================
-        public override void SaveChanges()
+        protected override Insert<TValue> CreateInsert(IEnumerable<object> keys, TValue value)
         {
-            foreach (var change in mPendingChanges)
-                change.Apply();
-
-            Context.SaveChanges();
-            mPendingChanges.Clear();
+            return new EFInsert<TValue>(keys, value, SetSelector(Context));
         }
         //===============================================================
-        public override void Insert(TValue value)
+        protected override Remove CreateRemove(IEnumerable<object> keys)
         {
-            mPendingChanges.Add(new EFInsert<TValue>(KeySelector(value), value, SetSelector(Context)));
+            return new EFRemove<TValue>(keys, SetSelector(Context));
         }
         //===============================================================
-        public override void Insert(IEnumerable<TValue> values)
+        protected override Modify<TValue> CreateModify(IEnumerable<object> keys, TValue value, Action<TValue> modifier)
         {
-            foreach (var x in values)
-                Insert(x);
-//            var oldValue = Context.Configuration.AutoDetectChangesEnabled;
-//            Context.Configuration.AutoDetectChangesEnabled = false;
-//
-//            var set = SetSelector(Context);
-//            foreach (var value in values)
-//                set.Add(value);
-//
-//            Context.ChangeTracker.DetectChanges();
-//            Context.Configuration.AutoDetectChangesEnabled = oldValue;
+            return new EFModify<TValue>(keys, value, modifier);
         }
         //===============================================================
-        public override void RemoveByKey(params Object[] keys)
-        {
-            mPendingChanges.Add(new EFRemove<TValue>(keys, SetSelector(Context)));
-        }
-        //===============================================================
-        public void RemoveAll()
-        {
-            // Since RemoveAll works differently than the other changes, we have to manually remove any inserts which
-            // haven't yet been saved
-            mPendingChanges.RemoveAll(x => x is EFInsert<TValue>);
-            mPendingChanges.Add(new EFRemoveAll<TValue, TContext>(Context));
-        }
-        //===============================================================
-        public override void RemoveAllByKey(IEnumerable<Object[]> keys)
-        {
-            foreach (var x in keys)
-                mPendingChanges.Add(new EFRemove<TValue>(x, SetSelector(Context)));
-        }
+//        public void RemoveAll()
+//        {
+//            // Since RemoveAll works differently than the other changes, we have to manually remove any inserts which
+//            // haven't yet been saved
+//            mPendingChanges.RemoveAll(x => x is EFInsert<TValue>);
+//            mPendingChanges.Add(new EFRemoveAll<TValue, TContext>(Context));
+//        }
         //===============================================================
         public override bool ExistsByKey(params Object[] keys)
         {
@@ -171,41 +82,32 @@ namespace Repository.EntityFramework
             return set.Find(keys) != null;
         }
         //===============================================================
-        public override ObjectContext<TValue> Find(params Object[] keys)
+        protected override ObjectContext<TValue> FindImpl(object[] keys)
         {
-            var set = SetSelector(Context);
-            var obj = set.Find(keys);
+            var obj = SetSelector(Context).Find(keys);
+            if (obj == null)
+                return null;
 
-            return obj != null ? new ObjectContext<TValue>(obj) : null;
+            return new ObjectContext<TValue>(obj);
+        }
+        //===============================================================
+        protected override void AfterApplyChanges()
+        {
+            try
+            {
+                base.AfterApplyChanges();
+                Context.SaveChanges();
+            }
+
+            catch (Exception e)
+            {
+                throw e;
+            }
         }
         //===============================================================
         public override EnumerableObjectContext<TValue> Items
         {
-            get { return new EnumerableObjectContext<TValue>(SetSelector(Context)); }
-        }
-        //===============================================================
-        public override void Update<T>(T value, params Object[] keys)
-        {
-            var obj = Find(keys);
-            if (obj != null)
-                obj.Update(value);
-        }
-        //===============================================================
-        public override void Update<T, TProperty>(T value, Func<TValue, TProperty> getter, params Object[] keys)
-        {
-            var obj = Find(keys);
-            if (obj != null)
-                obj.Update(value, getter);
-        }
-        //===============================================================
-        public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
-        {
-            throw new NotImplementedException();
-        }
-        //===============================================================
-        public override void Update(string json, UpdateType updateType, params object[] keys)
-        {
-            throw new NotImplementedException();
+            get { return new EnumerableObjectContext<TValue>(SetSelector(Context), this); }
         }
         //===============================================================
         /// <summary>

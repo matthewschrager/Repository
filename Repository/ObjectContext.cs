@@ -5,6 +5,8 @@ using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using KellermanSoftware.CompareNetObjects;
+using Repository.ChangeTracking;
 
 namespace Repository
 {
@@ -18,16 +20,6 @@ namespace Repository
         //===============================================================
         public T Object { get; private set; }
         //===============================================================
-        public void Update<TValue>(TValue value)
-        {
-            AutoMapper.Mapper.DynamicMap(value, Object);
-        }
-        //===============================================================
-        public void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter)
-        {
-            AutoMapper.Mapper.DynamicMap(value, getter(Object));
-        }
-        //===============================================================
     }
 
     public class EnumerableObjectContext<T> : IQueryable<T>
@@ -35,16 +27,19 @@ namespace Repository
         private IQueryProvider mCachedQueryProvider = null;
 
         //===============================================================
-        public EnumerableObjectContext(IQueryable<T> objects)
+        public EnumerableObjectContext(IQueryable<T> objects, Repository<T> parentRepository)
         {
             Objects = objects;
+            ParentRepository = parentRepository;
         }
         //===============================================================
-        protected IQueryable<T> Objects { get; private set; }
+        private Repository<T> ParentRepository { get; set; }
+        //===============================================================
+        private IQueryable<T> Objects { get; set; }
         //===============================================================
         public IEnumerator<T> GetEnumerator()
         {
-            return Objects.GetEnumerator();
+            return new CallbackEnumerator<T>(Objects.GetEnumerator(), x => ParentRepository.AddChangeTracker(x));
         }
         //===============================================================
         IEnumerator IEnumerable.GetEnumerator()

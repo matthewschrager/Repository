@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace Repository
 {
-    public interface IPendingChange
+    public interface Operation
     {
         //===============================================================
         void Apply();
         //===============================================================
     }
 
-    public abstract class Insert<TValue> : IPendingChange
+    public abstract class Insert<TValue> : Operation
     {
         //===============================================================
         public Insert(IEnumerable<Object> keys, TValue value)
@@ -30,7 +30,7 @@ namespace Repository
         //===============================================================
     }
 
-    public abstract class Remove : IPendingChange
+    public abstract class Remove : Operation
     {
         //===============================================================
         public Remove(IEnumerable<Object> keys)
@@ -44,18 +44,21 @@ namespace Repository
         //===============================================================
     }
 
-    public abstract class Modify<TValue> : IPendingChange
+    public abstract class Modify<T> : Operation
     {
         //===============================================================
-        public Modify(TValue value, Action<TValue> modifier)
+        public Modify(IEnumerable<Object> keys, T value, Action<T> modifier)
         {
+            Keys = keys;
             Modifier = modifier;
             Value = value;
         }
         //===============================================================
-        public TValue Value { get; private set; }
+        public IEnumerable<Object> Keys { get; private set; }
         //===============================================================
-        public Action<TValue> Modifier { get; private set; }
+        public T Value { get; private set; }
+        //===============================================================
+        public Action<T> Modifier { get; private set; }
         //===============================================================
         public abstract void Apply();
         //===============================================================

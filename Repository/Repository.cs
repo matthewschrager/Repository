@@ -5,22 +5,57 @@ using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using Repository.ChangeTracking;
 
 namespace Repository
 {
     public abstract class Repository<T> : IDisposable
     {
         //===============================================================
-        protected Repository(Func<T, Object[]> keySelector)
+        protected Repository(Func<T, Object[]> keySelector, bool ignoreChangeTracking = false)
         {
             KeySelector = keySelector;
+            UnsavedObjects = new List<ChangeTracker<T>>();
+            PendingOperations = new List<Operation>();
+
+            IgnoreChangeTracking = ignoreChangeTracking;
         }
+        //===============================================================
+        internal bool IgnoreChangeTracking { get; set; }
         //===============================================================
         protected Func<T, Object[]> KeySelector { get; private set; }
         //===============================================================
-        public abstract void Insert(T value);
+        private List<ChangeTracker<T>> UnsavedObjects { get; set; }
         //===============================================================
-        public virtual void Insert(IEnumerable<T> values)
+        private List<Operation> PendingOperations { get; set; }
+        //===============================================================
+        protected abstract Insert<T> CreateInsert(IEnumerable<object> keys, T value);
+        //===============================================================
+        protected abstract Remove CreateRemove(IEnumerable<object> keys);
+        //===============================================================
+        protected abstract Modify<T> CreateModify(IEnumerable<object> keys, T value, Action<T> modifier);
+        //===============================================================
+        public abstract bool ExistsByKey(params Object[] keys);
+        //===============================================================
+        internal void AddChangeTracker(T obj)
+        {
+            if (!IgnoreChangeTracking && !ChangeTracker<T>.CanTrackChanges)
+                throw new Exception(String.Format("Cannot enable change tracking for type {0}. Please ensure that it has a public default (parameterless) constructor.", typeof(T)));
+
+            UnsavedObjects.Add(new ChangeTracker<T>(obj, KeySelector));
+        }
+        //===============================================================
+        protected void AddPendingOperation(Operation operation)
+        {
+            PendingOperations.Add(operation);
+        }
+        //===============================================================
+        public void Insert(T value)
+        {
+            AddPendingOperation(CreateInsert(KeySelector(value), value));
+        }
+        //===============================================================
+        public void Insert(IEnumerable<T> values)
         {
             foreach (var value in values)
                 Insert(value);
@@ -33,36 +68,88 @@ namespace Repository
         //===============================================================
         public void RemoveAll(IEnumerable<T> objects = null)
         {
+            if (objects == null)
+                PendingOperations.RemoveAll(x => x is Insert<T>);
+
             objects = objects ?? Items;
             RemoveAllByKey(objects.Select(x => KeySelector(x)));
         }
         //===============================================================
-        public abstract void RemoveByKey(params Object[] keys);
+        public void RemoveByKey(params Object[] keys)
+        {
+            AddPendingOperation(CreateRemove(keys));
+        }
         //===============================================================
-        public virtual void RemoveAllByKey(IEnumerable<Object[]> keys)
+        public void RemoveAllByKey(IEnumerable<Object[]> keys)
         {
             foreach (var keySet in keys)
                 RemoveByKey(keySet);
         }
-        //===============================================================
-        public abstract void SaveChanges();
-        //===============================================================
-        public abstract bool ExistsByKey(params Object[] keys);
         //===============================================================
         public bool Exists(T obj)
         {
             return ExistsByKey(KeySelector(obj));
         }
         //===============================================================
-        public abstract void Update<TValue>(TValue value, params Object[] keys);
+        public void Update<TValue>(TValue modifier, params Object[] keys)
+        {
+            var existingItem = FindWrapper(keys, false);
+            if (existingItem == null)
+                return;
+
+            AddPendingOperation(CreateModify(keys, existingItem.Object, x => AutoMapper.Mapper.DynamicMap(modifier, x)));
+        }
         //===============================================================
-        public abstract void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys);
+        public void Update<TValue, TProperty>(TValue modifier, Func<T, TProperty> getter, params Object[] keys)
+        {
+            var existingItem = FindWrapper(keys, false);
+            if (existingItem == null)
+                return;
+
+            AddPendingOperation(CreateModify(keys, existingItem.Object, x => AutoMapper.Mapper.DynamicMap(modifier, getter(x))));
+        }
         //===============================================================
-        public abstract void Update(String json, UpdateType updateType, params Object[] keys);
+        public ObjectContext<T> Find(params Object[] keys)
+        {
+            return FindWrapper(keys, true);
+        }
         //===============================================================
-        public abstract void Update(String pathToProperty, String json, UpdateType updateType, params Object[] keys);
+        private ObjectContext<T> FindWrapper(object[] keys, bool trackChanges)
+        {
+            var obj = FindImpl(keys);
+            if (trackChanges && obj != null)
+                AddChangeTracker(obj.Object);
+
+            return obj;
+        }
         //===============================================================
-        public abstract ObjectContext<T> Find(params Object[] keys);
+        protected abstract ObjectContext<T> FindImpl(object[] keys);
+        //===============================================================
+        public void SaveChanges()
+        {
+            ApplyChanges();
+            AfterApplyChanges();
+        }
+        //===============================================================
+        private void ApplyChanges()
+        {
+            // For any modified objects, add an update to the list of pending ops
+            foreach (var obj in UnsavedObjects.Where(x => x.HasChanges))
+                Update(obj.CurrentValue, KeySelector(obj.CurrentValue));
+
+            // Run all the pending ops in order
+            foreach (var change in PendingOperations)
+                change.Apply();
+
+            // Remove all pending changes and unsaved objects, since they're all processed
+            UnsavedObjects.Clear();
+            PendingOperations.Clear();
+        }
+        //===============================================================
+        protected virtual void AfterApplyChanges()
+        {
+            // Do nothing by default
+        }
         //===============================================================
         public abstract EnumerableObjectContext<T> Items { get; }
         //===============================================================

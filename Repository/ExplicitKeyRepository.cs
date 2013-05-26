@@ -8,10 +8,17 @@ namespace Repository
 {
     public class ExplicitKeyRepository<T> : IDisposable
     {
+        protected static readonly Func<T, object[]> NullKeySelector = x => new object[] { }; 
+
         //===============================================================
         public ExplicitKeyRepository(Repository<T> implicitKeyRepository)
         {
             ImplicitKeyRepository = implicitKeyRepository;
+
+            // We allow change tracking to be ignored ONLY for string repositories, because String has no
+            // default constructor (and so cannot be change-tracked) but we still want to allow strings to be stored
+            // with explicit keys
+            ImplicitKeyRepository.IgnoreChangeTracking = typeof(T) == typeof(String);
         }
         //===============================================================
         public Repository<T> ImplicitKeyRepository { get; private set; }
@@ -68,6 +75,8 @@ namespace Repository
 
     public class ExplicitKeyRepository<TValue, TKey> : IDisposable
     {
+        protected static readonly Func<TValue, object[]> NullKeySelector = x => new object[] { }; 
+
         //===============================================================
         protected ExplicitKeyRepository(Repository<TValue> innerRepository)
         {
@@ -126,6 +135,8 @@ namespace Repository
 
     public class ExplicitKeyRepository<TValue, TKey1, TKey2> : IDisposable
     {
+        protected static readonly Func<TValue, object[]> NullKeySelector = x => new object[] { }; 
+
         //===============================================================
         protected ExplicitKeyRepository(Repository<TValue> innerRepository)
         {

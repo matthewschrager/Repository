@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Repository.Azure.Serialization
+namespace Repository.Serialization
 {
     public class NullSerializer : ISerializer<String>
     {

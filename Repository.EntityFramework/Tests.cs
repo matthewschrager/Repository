@@ -7,6 +7,7 @@ using System.Data.Entity;
 using System.Linq;
 using System.Transactions;
 using NUnit.Framework;
+using Repository.Testing;
 
 namespace Repository.EntityFramework
 {
@@ -32,216 +33,26 @@ namespace Repository.EntityFramework
     internal class TestContext : DbContext
     {
         //===============================================================
-        public DbSet<TestObjectWithExplicitKey> ExplicitObjects { get; set; }
+        public DbSet<TestClass> Objects { get; set; }
         //===============================================================
-        public DbSet<TestObjectWithConventionKey> ConventionObjects { get; set; }
+        public DbSet<TestObjectWithExplicitKey> ExplicitKeys { get; set; }
+        //===============================================================
+        public DbSet<TestObjectWithConventionKey> ConventionKeys { get; set; }
         //===============================================================
     }
 
     [TestFixture]
     internal class EFRepositoryTests
     {
-        List<TestObjectWithExplicitKey> mTestObjects = Enumerable.Range(0, 100).Select(x => new TestObjectWithExplicitKey { ID = x.ToString(), Value = x.ToString() }).ToList();
+        List<TestClass> mTestObjects = Enumerable.Range(0, 5).Select(x => new TestClass { ID = x.ToString(), StringValue = x.ToString() }).ToList();
 
         //===============================================================
         [Test]
-        public void TypedRepositoryTest()
+        public void Standard()
         {
-            if (ConfigurationManager.AppSettings["Environment"] == "Test")
-                Assert.Ignore("Skipped on AppHarbor");
-
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey, String>(x => x.ExplicitObjects))
-            {
-                repo.RemoveAll();
-                repo.SaveChanges();
-
-                var testObj = mTestObjects.First();
-                repo.Insert(testObj);
-                repo.SaveChanges();
-
-                var newObj = new TestObjectWithExplicitKey { ID = testObj.ID, Value = "NEW VALUE" };
-
-                var dbObj = repo.Find(newObj.ID);
-                dbObj.Update(newObj);
-                repo.SaveChanges();
-
-                dbObj = repo.Find(newObj.ID);
-                Assert.AreEqual(newObj.Value, dbObj.Object.Value);
-
-                repo.RemoveAll();
-            }
-        }
-        //===============================================================
-        [Test]
-        public void Update()
-        {
-            if (ConfigurationManager.AppSettings["Environment"] == "Test")
-                Assert.Ignore("Skipped on AppHarbor");
-
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
-            {
-                repo.RemoveAll();
-                repo.SaveChanges();
-
-                var testObj = mTestObjects.First();
-                repo.Insert(testObj);
-                repo.SaveChanges();
-
-                var newObj = new TestObjectWithExplicitKey { ID = testObj.ID, Value = "NEW VALUE" };
-
-                var dbObj = repo.Find(newObj.ID);
-                dbObj.Update(newObj);
-                repo.SaveChanges();
-
-                dbObj = repo.Find(newObj.ID);
-                Assert.AreEqual(newObj.Value, dbObj.Object.Value);
-
-                repo.RemoveAll();
-            }
-        }
-        //===============================================================
-        [Test]
-        public void BatchInsertAndRemoveTest()
-        {
-            if (ConfigurationManager.AppSettings["Environment"] == "Test")
-                Assert.Ignore("Skipped on AppHarbor");
-
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
-            {
-                repo.RemoveAll(repo.Items);
-                repo.Insert(mTestObjects);
-                repo.SaveChanges();
-
-                var storedObjects = repo.Items.ToList();
-                Assert.IsTrue(storedObjects.All(x => mTestObjects.Exists(y => y.ID == x.ID)));
-
-                repo.RemoveAll(repo.Items);
-                Assert.IsTrue(repo.Items.Any());
-
-                repo.SaveChanges();
-                
-                storedObjects = repo.Items.ToList();
-                Assert.IsTrue(!storedObjects.Any());
-            }
-        }
-        //===============================================================
-        [Test]
-        public void RemoveAll()
-        {
-            if (ConfigurationManager.AppSettings["Environment"] == "Test")
-                Assert.Ignore("Skipped on AppHarbor");
-
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
-            {
-                repo.RemoveAll(repo.Items);
-                repo.SaveChanges();
-                Assert.IsTrue(!repo.Items.Any());
-
-
-                repo.Insert(mTestObjects);
-                repo.SaveChanges();
-                Assert.IsTrue(repo.Items.Any());
-
-                // Remove all batch
-                repo.RemoveAll();
-                repo.SaveChanges();
-                Assert.IsTrue(!repo.Items.Any());
-
-                // Remove all without saving in between
-                repo.Insert(mTestObjects);
-                repo.RemoveAll();
-                repo.SaveChanges();
-                Assert.IsTrue(!repo.Items.Any());
-
-                // Remove all with inserts before and after
-                repo.Insert(mTestObjects);
-                repo.RemoveAll();
-                repo.Insert(mTestObjects);
-                repo.RemoveAll();
-                repo.SaveChanges();
-                Assert.IsTrue(!repo.Items.Any());
-
-
-                repo.Insert(mTestObjects);
-                repo.SaveChanges();
-
-                // Remove all by key
-                repo.RemoveAllByKey(repo.Items.ToList().Select(x => new object[] { x.ID }));
-                repo.SaveChanges();
-
-                Assert.IsTrue(!repo.Items.Any());
-
-                // Remove all by object
-                repo.Insert(mTestObjects);
-                repo.SaveChanges();
-
-                repo.RemoveAll(mTestObjects);
-                repo.SaveChanges();
-
-                Assert.IsTrue(!repo.Items.Any());
-            }
-        }
-        //===============================================================
-        [Test]
-        public void BatchInsertTest()
-        {
-            if (ConfigurationManager.AppSettings["Environment"] == "Test")
-                Assert.Ignore("Skipped on AppHarbor");
-
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
-            {
-                repo.RemoveAllByKey(repo.Items.ToList().Select(x => new object[] { x.ID }));
-
-
-                var objects = Enumerable.Range(0, 100).Select(x => new TestObjectWithExplicitKey { ID = x.ToString(), Value = x.ToString() }).ToList();
-                repo.Insert(objects);
-                repo.RemoveAll(objects);
-            }
-        }
-        //===============================================================
-        [Test]
-        public void SaveItemsChangesTest()
-        {
-            if (ConfigurationManager.AppSettings["Environment"] == "Test")
-                Assert.Ignore("Skipped on AppHarbor");
-
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
-            {
-                repo.RemoveAll();
-                repo.SaveChanges();
-
-                var objects = Enumerable.Range(0, 100).Select(x => new TestObjectWithExplicitKey { ID = x.ToString(), Value = x.ToString() }).ToList();
-                repo.Insert(objects);
-                repo.SaveChanges();
-
-                var items = repo.Items.ToList();
-                items.ForEach(x => x.Value = "MODIFIED");
-                repo.SaveChanges();
-
-                items = repo.Items.ToList();
-                Assert.IsTrue(items.All(x => x.Value == "MODIFIED"));
-            }
-        }
-        //===============================================================
-        [Test]
-        public void ExistsWorks()
-        {
-            if (ConfigurationManager.AppSettings["Environment"] == "Test")
-                Assert.Ignore("Skipped on AppHarbor");
-
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
-            {
-                repo.RemoveAll();
-                repo.SaveChanges();
-
-                var item = new TestObjectWithExplicitKey { ID = "1", Value = "blah" };
-                repo.Insert(item);
-                repo.SaveChanges();
-
-                Assert.IsTrue(repo.Exists(item));
-                repo.RemoveAll();
-                repo.SaveChanges();
-            }
+            var implicitKeyRepo = new EFRepository<TestContext, TestClass>(x => x.Objects);
+            var typedKeyRepo = new EFRepository<TestContext, TestClass, String>(x => x.Objects);
+            StandardTests.All(implicitKeyRepo, typedKeyRepo);
         }
         //===============================================================
         [Test]
@@ -250,7 +61,7 @@ namespace Repository.EntityFramework
             if (ConfigurationManager.AppSettings["Environment"] == "Test")
                 Assert.Ignore("Skipped on AppHarbor");
 
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
+            using (var repo = new EFRepository<TestContext, TestClass>(x => x.Objects))
             {
                 repo.RemoveAll();
                 repo.SaveChanges();
@@ -263,7 +74,7 @@ namespace Repository.EntityFramework
                 }
             }
 
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
+            using (var repo = new EFRepository<TestContext, TestClass>(x => x.Objects))
             {
                 Assert.IsTrue(repo.Items.Any());
                 repo.RemoveAll();
@@ -271,7 +82,7 @@ namespace Repository.EntityFramework
             }
 
 
-            using (var repo = new EFRepository<TestContext, TestObjectWithExplicitKey>(x => x.ExplicitObjects))
+            using (var repo = new EFRepository<TestContext, TestClass>(x => x.Objects))
             {
 
                 try

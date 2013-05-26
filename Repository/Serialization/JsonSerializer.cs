@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace Repository.Azure.Serialization
+namespace Repository.Serialization
 {
     public class JsonSerializer<T> : ISerializer<T>
     {

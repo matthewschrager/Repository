@@ -26,7 +26,7 @@ namespace Repository
         //===============================================================
     }
 
-    internal class InMemoryRemove<TKey, TValue> : Remove
+    internal class InMemoryRemove<TValue> : Remove
     {
         //==============================================================='
         public InMemoryRemove(IEnumerable<String> keys, IDictionary<String, TValue> dictionary)
@@ -48,8 +48,8 @@ namespace Repository
     internal class InMemoryModify<TValue> : Modify<TValue>
     {
         //===============================================================
-        public InMemoryModify(TValue value, Action<TValue> modifier)
-            : base(value, modifier)
+        public InMemoryModify(IEnumerable<object> keys, TValue value, Action<TValue> modifier)
+            : base(keys, value, modifier)
         {}
         //===============================================================
         public override void Apply()
@@ -62,32 +62,25 @@ namespace Repository
     public class InMemoryRepository<T> : Repository<T> where T : class
     {
         private ConcurrentDictionary<String, T> mData = new ConcurrentDictionary<string, T>();
-        private IList<IPendingChange> mPendingChanges = new List<IPendingChange>();
 
         //===============================================================
         public InMemoryRepository(Func<T, Object> keySelector)
-            : base(x => new object[] { keySelector(x) })
+            : base(x => new[] { keySelector(x) })
         {}
         //===============================================================
-        public override void SaveChanges()
+        protected override Insert<T> CreateInsert(IEnumerable<object> keys, T value)
         {
-            foreach (var change in mPendingChanges)
-                change.Apply();
-
-            mPendingChanges.Clear();
+            return new InMemoryInsert<T>(keys.Select(x => x.ToString()), value, mData);
         }
         //===============================================================
-        public override void Insert(T value)
+        protected override Remove CreateRemove(IEnumerable<object> keys)
         {
-            mPendingChanges.Add(new InMemoryInsert<T>(KeySelector(value).Select(x => x.ToString()), value, mData));
+            return new InMemoryRemove<T>(keys.Select(x => x.ToString()), mData);
         }
         //===============================================================
-        public override void RemoveByKey(Object[] keys)
+        protected override Modify<T> CreateModify(IEnumerable<object> keys, T value, Action<T> modifier)
         {
-            if (keys.Length > 1)
-                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
-
-            mPendingChanges.Add(new InMemoryRemove<String, T>(keys.Select(x => x.ToString()), mData));
+            return new InMemoryModify<T>(keys, value, modifier);
         }
         //===============================================================
         public override bool ExistsByKey(params Object[] keys)
@@ -98,47 +91,19 @@ namespace Repository
             return mData.ContainsKey(keys.First().ToString());
         }
         //===============================================================
-        public override ObjectContext<T> Find(params Object[] keys)
+        protected override ObjectContext<T> FindImpl(object[] keys)
         {
-            if (keys.Length > 1)
-                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
+            var key = keys.First().ToString();
+            var obj = default(T);
+            if (!mData.TryGetValue(key, out obj))
+                return null;
 
-            T obj = null;
-            mData.TryGetValue(keys.First().ToString(), out obj);
             return new ObjectContext<T>(obj);
         }
         //===============================================================
         public override EnumerableObjectContext<T> Items
         {
-            get { return new EnumerableObjectContext<T>(mData.Values.AsQueryable()); }
-        }
-        //===============================================================
-        public override void Update<TValue>(TValue value, params Object[] keys)
-        {
-            if (keys.Length > 1)
-                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
-
-            var existingValue = mData[keys.First().ToString()];
-            mPendingChanges.Add(new InMemoryModify<T>(existingValue, x => AutoMapper.Mapper.DynamicMap(value, x)));
-        }
-        //===============================================================
-        public override void Update<TValue, TProperty>(TValue value, Func<T, TProperty> getter, params Object[] keys)
-        {
-            if (keys.Length > 1)
-                throw new NotSupportedException("InMemoryRepository only supports objects with a single key.");
-
-            var existingValue = mData[keys.First().ToString()];
-            mPendingChanges.Add(new InMemoryModify<T>(existingValue, x => AutoMapper.Mapper.DynamicMap(value, getter(x))));
-        }
-        //===============================================================
-        public override void Update(string pathToProperty, string json, UpdateType updateType, params object[] keys)
-        {
-            throw new NotImplementedException();
-        }
-        //===============================================================
-        public override void Update(string json, UpdateType updateType, params object[] keys)
-        {
-            throw new NotImplementedException();
+            get { return new EnumerableObjectContext<T>(mData.Values.AsQueryable(), this); }
         }
         //===============================================================
         /// <summary>

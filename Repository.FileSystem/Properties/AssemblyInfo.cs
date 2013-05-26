@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Repository.Azure")]
-[assembly: AssemblyDescription("An implementation of the Repository pattern for Windows Azure Blob Storage")]
+[assembly: AssemblyTitle("Repository.FileSystem")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Matthew Schrager")]
-[assembly: AssemblyProduct("Repository.Azure")]
-[assembly: AssemblyCopyright("Copyright © Matthew Schrager  2013")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("Repository.FileSystem")]
+[assembly: AssemblyCopyright("Copyright ©  2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("b610babf-87ad-4c62-a41f-7e1cdebdc319")]
+[assembly: Guid("b76fcc64-831c-4ee4-81d1-25cc05761f5b")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.1.5")]
-[assembly: AssemblyFileVersion("1.0.1.5")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="DbContextExtensions.cs" />
     <Compile Include="EFRepository.cs" />
+    <Compile Include="Operations.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="EntityDataReader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

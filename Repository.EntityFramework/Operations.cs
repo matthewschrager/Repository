@@ -1,81 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
 
-namespace Repository.Azure
+namespace Repository.EntityFramework
 {
-    internal class AzureInsert<T> : Insert<T>
+    internal class EFInsert<TValue> : Insert<TValue> where TValue : class
     {
         //===============================================================
-        public AzureInsert(IEnumerable<Object> keys, T value, AzureContainerInterface<T> azureContainerInterface)
+        public EFInsert(IEnumerable<Object> keys, TValue value, DbSet<TValue> set)
             : base(keys, value)
         {
-            AzureContainerInterface = azureContainerInterface;
+            DbSet = set;
         }
         //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        private DbSet<TValue> DbSet { get; set; }
         //===============================================================
         public override void Apply()
         {
-            AzureContainerInterface.StoreObject(Value, Keys);
+            DbSet.Add(Value);
         }
         //===============================================================
     }
 
-    internal class AzureRemove<T> : Remove
+    internal class EFRemove<TValue> : Remove where TValue : class
     {
         //===============================================================
-        public AzureRemove(IEnumerable<Object> keys, AzureContainerInterface<T> azureContainerInterface)
+        public EFRemove(IEnumerable<Object> keys, DbSet<TValue> dbSet)
             : base(keys)
         {
-            AzureContainerInterface = azureContainerInterface;
+            DbSet = dbSet;
         }
         //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        private DbSet<TValue> DbSet { get; set; }
         //===============================================================
         public override void Apply()
         {
-            AzureContainerInterface.DeleteObject(Keys);
+            var obj = DbSet.Find(Keys.ToArray());
+            DbSet.Remove(obj);
         }
         //===============================================================
     }
 
-    internal class AzureRemoveAll<T> : Operation
+    internal class EFRemoveAll<TValue, TContext> : Operation
+        where TContext : DbContext
+        where TValue : class
     {
         //===============================================================
-        public AzureRemoveAll(AzureContainerInterface<T> azureContainerInterface)
+        public EFRemoveAll(TContext context)
         {
-            AzureContainerInterface = azureContainerInterface;
+            Context = context;
         }
         //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        private TContext Context { get; set; }
         //===============================================================
         public void Apply()
         {
-            AzureContainerInterface.DeleteContainer();
+            var tableName = Context.GetTableName<TValue>();
+            tableName = tableName.Replace("[dbo].", "").Replace("[", "").Replace("]", "");
+            var query = "DELETE FROM " + tableName;
+
+            Context.Database.ExecuteSqlCommand(query);
         }
         //===============================================================
     }
 
-    internal class AzureModify<T> : Modify<T>
+    internal class EFModify<TValue> : Modify<TValue> where TValue : class
     {
         //===============================================================
-        public AzureModify(T value, IEnumerable<Object> keys, Action<T> modifier, AzureContainerInterface<T> azureContainerInterface)
+
+        public EFModify(IEnumerable<object> keys, TValue value, Action<TValue> modifier)
             : base(keys, value, modifier)
-        {
-            AzureContainerInterface = azureContainerInterface;
-        }
-        //===============================================================
-        private AzureContainerInterface<T> AzureContainerInterface { get; set; }
+        { }
         //===============================================================
         public override void Apply()
         {
             Modifier(Value);
-            AzureContainerInterface.StoreObject(Value, Keys);
         }
         //===============================================================
     }

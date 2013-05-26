@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Repository.Azure.Serialization
+namespace Repository.Serialization
 {
-    public class Base64Encoder<T> : Encoder<T>
+    public class Base64Encoder<T> : StringEncoder<T>
     {
         //===============================================================
         public Base64Encoder(ISerializer<T> serializer)
