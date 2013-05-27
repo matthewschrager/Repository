@@ -16,6 +16,13 @@ And the fourth is ```FileSystemRepository```, an implementation that serializes 
 
 Pull requests for additional implementations (and improvements to existing ones) are welcome and encouraged.
 
+Change Tracking
+=================
+
+As you'll see in the examples below, changes to objects accessed via a ```Repository``` instance are tracked automatically and committed back to the underlying data store whenever
+a call to ```SaveChanges``` is made. This functionality is enabled automatically for any class which derives from ```Repository```; if you're writing a new implementation, you'll get
+change tracking for free. See the 'Modify an object' example below to get an idea for how this works.
+
 Examples
 ===========
 
@@ -45,8 +52,8 @@ class MyClass
 
 using (var repository = new MyConcreteRepository<MyClass>())
 {
-	var valueContext = repository.Find("myKey"))
-	var value = valueContext.Object;
+	var objectContext = repository.Find("myKey"))
+	var obj = objectContext.Object;
 
 	// Do cool things with this value
 }
@@ -225,7 +232,36 @@ your ```Web.config``` and decorate your key properties with ```[Key]``` attribut
 AzureRepository
 ===============
 
-Documentation coming soon!
+All you need for ```AzureRepository``` is a proper connection string for [Azure blob storage](http://www.windowsazure.com/en-us/develop/net/how-to-guides/blob-storage/). 
+You can either pass this connection string directly to an instance of ```AzureRepository```, or you can store it in a App.config/Web.config file and reference it by name.
+There's also a static ```ForStorageEmulator``` method that will create an instance of ```AzureRepository``` pointed at the local 
+[Azure storage emulator](http://msdn.microsoft.com/en-us/library/windowsazure/ff683674.aspx).
+
+Re-using the ```TestClass``` class from above, instantiating an ```AzureRepository``` looks like this:
+
+```C#
+// From explicit connection string
+var repository = AzureRepository<TestClass>.FromExplicitConnectionString(x => x.Key, myConnectionString);
+
+// From named connection string
+var repository = AzureRepository<TestClass>.FromNamedConnectionString(x => x.Key, "myConnectionStringName");
+
+// For storage emulator
+var repository = AzureRepository<TestClass>.ForStorageEmulator(x => x.Key);
+```
+
+There is also an ```AzureOptions``` class that allows you to specify how e.g. objects are serialized to blob storage, access rules for stored objects, content type, etc.
+
+FileSystemRepository
+=====================
+
+```FileSystemRepository``` is an implementation that (surprise) saves objects to the local filesystem. Instantiating one is very simple:
+
+```C#
+var repository = new FileSystemRepository<TestClass>(x => x.Key);
+```
+
+ You can also optionally specify a ```FileSystemOptions``` parameter that configures how objects are serialized to disk, where they're stored, the file extension, etc.
 
 License
 ===========
