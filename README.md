@@ -52,7 +52,7 @@ class MyClass
 
 using (var repository = new MyConcreteRepository<MyClass>())
 {
-	var objectContext = repository.Find("myKey"))
+	var objectContext = repository.Find("myKey");
 	var obj = objectContext.Object;
 
 	// Do cool things with this value
