@@ -24,26 +24,61 @@ namespace Repository.ChangeTracking
         //===============================================================
         public bool MoveNext()
         {
-            return InnerEnumerator.MoveNext();
+            try
+            {
+                return InnerEnumerator.MoveNext();
+            }
+
+            catch (Exception e)
+            {
+                throw new RepositoryException("Could not enumerate repository objects.", e);
+            }
         }
         //===============================================================
         public void Reset()
         {
-            InnerEnumerator.Reset();
+            try
+            {
+                InnerEnumerator.Reset();
+            }
+
+            catch (Exception e)
+            {
+                throw new RepositoryException("Could not reset repository items enumerator.", e);
+            }
         }
         //===============================================================
         public T Current
         {
             get
             {
-                OnEnumerateObject(InnerEnumerator.Current);
-                return InnerEnumerator.Current;
+                try
+                {
+                    OnEnumerateObject(InnerEnumerator.Current);
+                    return InnerEnumerator.Current;
+                }
+
+                catch (Exception e)
+                {
+                    throw new RepositoryException("Could not enumerate repository objects.", e);
+                }
             }
         }
         //===============================================================
         object IEnumerator.Current
         {
-            get { return Current; }
+            get
+            {
+                try
+                {
+                    return Current;
+                }
+
+                catch (Exception e)
+                {
+                    throw new RepositoryException("Could not enumerate repository objects.", e);
+                }
+            }
         }
         //===============================================================
     }

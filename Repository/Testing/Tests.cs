@@ -58,7 +58,7 @@ namespace Repository.Testing
                 var storedObj = repo.Find(obj.ID);
                 storedObj.Object.ID = "newKey";
 
-                Assert.Throws<InvalidOperationException>(repo.SaveChanges);
+                Assert.Throws<RepositoryException>(repo.SaveChanges);
             }
             //===============================================================
         }

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 using Repository.ChangeTracking;
 
 namespace Repository
@@ -40,7 +36,7 @@ namespace Repository
         internal void AddChangeTracker(T obj)
         {
             if (!IgnoreChangeTracking && !ChangeTracker<T>.CanTrackChanges)
-                throw new Exception(String.Format("Cannot enable change tracking for type {0}. Please ensure that it has a public default (parameterless) constructor.", typeof(T)));
+                throw new RepositoryException(String.Format("Cannot enable change tracking for type {0}. Please ensure that it has a public default (parameterless) constructor.", typeof(T)));
 
             UnsavedObjects.Add(new ChangeTracker<T>(obj, KeySelector));
         }
@@ -116,7 +112,17 @@ namespace Repository
         //===============================================================
         private ObjectContext<T> FindWrapper(object[] keys, bool trackChanges)
         {
-            var obj = FindImpl(keys);
+            ObjectContext<T> obj = null;
+            try
+            {
+                obj = FindImpl(keys);
+            }
+
+            catch (Exception e)
+            {
+                throw new RepositoryException("Could not access repository.", e);
+            }
+
             if (trackChanges && obj != null)
                 AddChangeTracker(obj.Object);
 
@@ -127,7 +133,16 @@ namespace Repository
         //===============================================================
         public void SaveChanges()
         {
-            ApplyChanges();
+            try
+            {
+                ApplyChanges();
+            }
+
+            catch (Exception e)
+            {
+                throw new RepositoryException("Could not commit changes to repository.", e);
+            }
+          
             AfterApplyChanges();
         }
         //===============================================================

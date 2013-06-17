@@ -1,16 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Configuration;
-using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Storage;
-using Newtonsoft.Json;
 
 namespace Repository.Azure
 {
