@@ -31,11 +31,11 @@ Store an object:
 
 ```C#
 var repository = new MyConcreteRepository<int>();
-repository.Store(1); // Store a single value
+repository.Insert(1); // Store a single value
 repository.SaveChanges();
 
 
-repository.Store(new[] { 2, 3, 4, 5 }); // Store a bunch of values
+repository.Insert(new[] { 2, 3, 4, 5 }); // Store a bunch of values
 repository.SaveChanges();
 ```
 
