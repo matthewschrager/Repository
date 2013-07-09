@@ -310,7 +310,7 @@ public abstract class Insert<TValue> : Operation
 Notice that this base class stores all of the information necessary to perform an insert into some underlying data
 store, namely the object to be inserted and the keys under which it should be stored.
 
-Now take a look at an implementation of ```Insert```, this one for ```InMemoryRepository```:
+Now take a look at an implementation of ```Insert```, this one for ```FileSystemRepository```:
 
 ```C#
 internal class FileSystemInsert<T> : Insert<T>
