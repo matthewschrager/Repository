@@ -263,6 +263,118 @@ var repository = new FileSystemRepository<TestClass>(x => x.Key);
 
  You can also optionally specify a ```FileSystemOptions``` parameter that configures how objects are serialized to disk, where they're stored, the file extension, etc.
 
+Implementing Your Own Repositories
+================================
+
+To understand how to go about doing implementing your own repositories, we need to 
+briefly go over how repositories work under the hood.
+
+All operations on ```Repository``` implementations are deferred; that is, they are not committed until a call to
+```SaveChanges``` is made. This is achieved by storing a list of pending operations and applying them 
+sequentially when ```SaveChanges``` is called. These pending operations are objects which implement the
+interface ```Operation```, which has a single method called ```Apply```:
+
+```C#
+public interface Operation
+{
+    //===============================================================
+    void Apply();
+    //===============================================================
+} 
+```
+
+There are three main types of operations: ```Insert```, ```Remove```, and ```Modify```. 
+These are abstract base classes. Each ```Repository``` implementation will provide its own concrete versions
+of these classes which perform the necessary operations. As an example, the abstract ```Insert``` class looks
+like this:
+
+```C#
+public abstract class Insert<TValue> : Operation
+{
+    //===============================================================
+    public Insert(IEnumerable<Object> keys, TValue value)
+    {
+        Keys = keys;
+        Value = value;
+    }
+    //===============================================================
+    public IEnumerable<Object> Keys { get; private set; }
+    //===============================================================
+    public TValue Value { get; private set; }
+    //===============================================================
+    public abstract void Apply();
+    //===============================================================
+}
+```
+
+Notice that this base class stores all of the information necessary to perform an insert into some underlying data
+store, namely the object to be inserted and the keys under which it should be stored.
+
+Now take a look at an implementation of ```Insert```, this one for ```InMemoryRepository```:
+
+```C#
+internal class FileSystemInsert<T> : Insert<T>
+{
+    //===============================================================
+    public FileSystemInsert(IEnumerable<object> keys, T value, FileSystemInterface<T> fsInterface)
+        : base(keys, value)
+    {
+        FileSystemInterface = fsInterface;
+    }
+    //===============================================================
+    private FileSystemInterface<T> FileSystemInterface { get; set; }
+    //===============================================================
+    public override void Apply()
+    {
+        FileSystemInterface.StoreObject(Value, Keys);
+    }
+    //===============================================================
+}
+```
+
+All this class does in its ```Apply``` method is call a supplied ```FileSystemInterface``` object to perform
+the actual insert. The ```FileSystemInterface``` class is a utility class that handles filesystem manipulation,
+but you could just as easily implement the filesystem serialization logic directly in ```Apply```. The point is 
+that the implementation of ```Insert``` is responsible for initiating the actual insertion operation into the 
+underlying data store. 
+
+In order to implement your own repositories, you have to implement three methods from the base ```Repository```
+class which correspond to the three types of operations mentioned above: 
+
+```C#
+//===============================================================
+protected abstract Insert<T> CreateInsert(IEnumerable<object> keys, T value);
+//===============================================================
+protected abstract Remove CreateRemove(IEnumerable<object> keys);
+//===============================================================
+protected abstract Modify<T> CreateModify(IEnumerable<object> keys, T value, Action<T> modifier);
+//===============================================================
+```
+
+These methods are responsible for returning implementations of the three types of operations, as shown
+above. 
+
+In addition to these methods, you must also implement three others:
+
+```C#
+//===============================================================
+protected abstract ObjectContext<T> FindImpl(object[] keys);
+//===============================================================
+public abstract bool ExistsByKey(params Object[] keys);
+//===============================================================
+public abstract EnumerableObjectContext<T> Items { get; } 
+//===============================================================
+```
+
+```FindImpl``` is reponsible for looking up an object from the underlying data store,
+```ExistsByKey``` is responsible for checking for an object's existence by its key values,
+and ```Items``` is responsible for enumerating the objects in the repository. These will likely
+call methods directly on the underlying data store or make use of some sort of interface such as 
+```FileSystemInterface``` (mentioned above). Again, the point is that these methods are responsible for
+interfacing with the underlying data store. As an example, if you were implementing a repository for Amazon S3 
+storage, the FindImpl method would likely call some sort of lookup method in the S3 API.
+
+
 License
 ===========
 
