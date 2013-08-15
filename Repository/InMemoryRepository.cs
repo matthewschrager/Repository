@@ -106,14 +106,19 @@ namespace Repository
             get { return new EnumerableObjectContext<T>(mData.Values.AsQueryable(), this); }
         }
         //===============================================================
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        /// <filterpriority>2</filterpriority>
         public override void Dispose()
         {
             // In-memory repository doesn't need to dispose of anything.
         }
         //===============================================================
+    }
+
+    public class InMemoryRepository<TValue, TKey> : Repository<TValue, TKey> where TValue : class
+    {
+        //================================================================================
+        public InMemoryRepository(Func<TValue, TKey> keySelector)
+            : base(new InMemoryRepository<TValue>(x => keySelector(x)))
+        {}
+        //================================================================================
     }
 }
