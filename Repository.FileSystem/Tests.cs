@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,10 +18,13 @@ namespace Repository.FileSystem
         public void Standard()
         {
             var implicitKeyRepo = new FileSystemRepository<TestClass>(x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories" });
-            var typedRepo = new FileSystemRepository<TestClass, String>(x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/TypedKeyRepositories" });
-            var explicitKeyRepo = new ExplicitKeyFileSystemRepository<TestClass>(new FileSystemOptions<TestClass> { FolderPath = "Tests/ExplicitKeyRepositories" });
+            var gzipRepo = new FileSystemRepository<TestClass>(x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories", StreamGenerator = new GZipStreamGenerator(), FileExtension = ".txt.gz" });
+            
             StandardTests.All(implicitKeyRepo);
+            StandardTests.All(gzipRepo);
         }
         //===============================================================
     }
+
+
 }

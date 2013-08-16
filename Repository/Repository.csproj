@@ -69,9 +69,6 @@
     <Compile Include="Testing\TestObjects.cs" />
     <Compile Include="InMemoryRepository.cs" />
     <Compile Include="KeyedObject.cs" />
-    <Compile Include="Serialization\Base64Encoder.cs" />
-    <Compile Include="Serialization\Encoder.cs" />
-    <Compile Include="Serialization\EncodingEncoder.cs" />
     <Compile Include="Serialization\ISerializer.cs" />
     <Compile Include="Serialization\JsonSerializer.cs" />
     <Compile Include="Serialization\NullSerializer.cs" />

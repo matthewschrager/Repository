@@ -53,7 +53,11 @@ namespace Repository.FileSystem
             if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
-            File.WriteAllBytes(filePath, Options.Encoder.Encode(value));
+            using (var writer = new StreamWriter(Options.StreamGenerator.GetWriteStream(filePath)))
+            {
+                writer.Write(Options.Serializer.Serialize(value));
+                writer.Flush();
+            }
         }
         //===============================================================
         public ObjectContext<T> GetObject(IEnumerable<object> keys)
@@ -67,9 +71,12 @@ namespace Repository.FileSystem
         //===============================================================
         private ObjectContext<T> GetObject(String path)
         {
-            var bytes = File.ReadAllBytes(path);
-            var obj = Options.Encoder.Decode(bytes);
-            return new ObjectContext<T>(obj);
+            using (var reader = new StreamReader(Options.StreamGenerator.GetReadStream(path)))
+            {
+                var str = reader.ReadToEnd();
+                var obj = Options.Serializer.Deserialize(str);
+                return new ObjectContext<T>(obj);
+            }
         }
         //===============================================================
         public bool Exists(IEnumerable<object> keys)

@@ -13,10 +13,10 @@ namespace Repository.Azure
         //===============================================================
         public AzureOptions()
         {
-            Encoder = new EncodingEncoder<T>(Encoding.UTF8, new JsonSerializer<T>());
+            Serializer = new JsonSerializer<T>();
         }
         //===============================================================
-        public Encoder<T> Encoder { get; set; } 
+        public ISerializer<T> Serializer { get; set; } 
         //===============================================================
         public String ContainerName { get; set; }
         //===============================================================

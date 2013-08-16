@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
@@ -50,19 +51,21 @@ namespace Repository.Azure
             using (var stream = new MemoryStream())
             {
                 block.DownloadToStream(stream);
-                
-                var obj = Options.Encoder.Decode(stream.ToArray());
-                return obj;
+                using (var reader = new StreamReader(stream))
+                {
+                    var obj = Options.Serializer.Deserialize(reader.ReadToEnd());
+                    return obj;
+                }
             }
         }
         //===============================================================
         public void StoreObject(T value, IEnumerable<Object> keys)
         {
             var block = GetBlock(keys);
-            var encodedValue = Options.Encoder.Encode(value);
+            var encodedValue = Options.Serializer.Serialize(value);
             using (var stream = new MemoryStream())
             {
-                using (var writer = new BinaryWriter(stream))
+                using (var writer = new StreamWriter(stream))
                 {
                     writer.Write(encodedValue);
                     stream.Seek(0, SeekOrigin.Begin);
