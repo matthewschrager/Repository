@@ -96,6 +96,11 @@ namespace Repository
             InnerRepository.Dispose();
         }
         //===============================================================
+        public ReadOnlyRepository<TValue, TKey> AsReadOnly()
+        {
+            return new ReadOnlyRepository<TValue, TKey>(this);
+        }
+        //================================================================================
     }
 
     public class Repository<TValue, TKey1, TKey2> : IDisposable
@@ -188,5 +193,10 @@ namespace Repository
             InnerRepository.Dispose();
         }
         //===============================================================
+        public ReadOnlyRepository<TValue, TKey1, TKey2> AsReadOnly()
+        {
+            return new ReadOnlyRepository<TValue, TKey1, TKey2>(this);
+        }
+        //================================================================================
     }
 }

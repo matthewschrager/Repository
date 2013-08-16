@@ -63,6 +63,7 @@
     <Compile Include="ChangeTracking\CallbackEnumerator.cs" />
     <Compile Include="ChangeTracking\ChangeTracker.cs" />
     <Compile Include="ExplicitKeyRepository.cs" />
+    <Compile Include="ReadOnlyRepository.cs" />
     <Compile Include="RepositoryException.cs" />
     <Compile Include="Testing\StandardTests.cs" />
     <Compile Include="Testing\TestObjects.cs" />

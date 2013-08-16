@@ -176,5 +176,10 @@ namespace Repository
             KeySelector = keySelector;
         }
         //===============================================================
+        public ReadOnlyRepository<T> AsReadOnly()
+        {
+            return new ReadOnlyRepository<T>(this);
+        }
+        //================================================================================
     }
 }
