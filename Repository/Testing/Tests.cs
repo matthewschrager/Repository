@@ -5,6 +5,12 @@ namespace Repository.Testing
 {
         internal class InMemoryRepositoryTests
         {
+            [Test]
+            public void Standard()
+            {
+                var repository = new InMemoryRepository<TestClass>(x => x.ID);
+                StandardTests.All(repository);
+            }
             //===============================================================
             [Test]
             public void UpdateTest()

@@ -27,9 +27,6 @@ namespace Repository.Testing
 
             storedObj = testObjects.Find(testObj.ID);
             Assert.Null(storedObj);
-
-            testObjects.RemoveAll();
-            testObjects.SaveChanges();
         }
         //===============================================================
         public static void Items(Repository<TestClass> repo)
@@ -96,9 +93,12 @@ namespace Repository.Testing
             storedObj = repo.Find(obj.ID);
             Assert.AreEqual("newValue2", storedObj.Object.StringValue);
 
-            repo.RemoveAll();
+            repo.Remove(storedObj.Object);
             repo.SaveChanges();
-
+        }
+        //================================================================================
+        public static void ChangeTrackingEnumeratedObjects(Repository<TestClass> repo)
+        {
             // Test changing enumerated objects
             var objects = Enumerable.Range(0, 10).Select(x => new TestClass(x.ToString(), x.ToString()));
             repo.Insert(objects);
@@ -121,9 +121,6 @@ namespace Repository.Testing
         //===============================================================
         public static void TypedRepositoryTest(Repository<TestClass, String> repo)
         {
-            repo.RemoveAll();
-            repo.SaveChanges();
-
             var testObj = new TestClass("myKey", "myValue");
             repo.Insert(testObj);
             repo.SaveChanges();
@@ -137,7 +134,7 @@ namespace Repository.Testing
             dbObj = repo.Find(newObj.ID);
             Assert.AreEqual(newObj.StringValue, dbObj.Object.StringValue);
 
-            repo.RemoveAll();
+            repo.Remove(newObj);
         }
         //===============================================================
         public static void BatchInsertAndRemove(Repository<TestClass> repo)
@@ -195,15 +192,12 @@ namespace Repository.Testing
         //===============================================================
         public static void Exists(Repository<TestClass> repo)
         {
-            repo.RemoveAll();
-            repo.SaveChanges();
-
             var item = new TestClass { ID = "1", StringValue = "blah" };
             repo.Insert(item);
             repo.SaveChanges();
 
             Assert.IsTrue(repo.Exists(item));
-            repo.RemoveAll();
+            repo.Remove(item);
             repo.SaveChanges();
         }
         //===============================================================
@@ -212,6 +206,7 @@ namespace Repository.Testing
             InsertAndRemove(implicitKeyRepository);
             Items(implicitKeyRepository);
             ChangeTracking(implicitKeyRepository);
+            ChangeTrackingEnumeratedObjects(implicitKeyRepository);
             BatchInsertAndRemove(implicitKeyRepository);
             Exists(implicitKeyRepository);
 

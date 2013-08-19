@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>CompareNETObjects</id>
-    <version>1.7.1.0</version>
+    <version>1.7.2.0</version>
     <title>Compare .NET Objects</title>
     <authors>gfinzer</authors>
     <owners>gfinzer</owners>
@@ -12,13 +12,11 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>What you have been waiting for. Perform a deep compare of any two .NET objects using reflection. Shows the differences between the two objects.</description>
     <summary>What you have been waiting for. Perform a deep compare of any two .NET objects using reflection. Shows the differences between the two objects.</summary>
-    <releaseNotes>* Updated assembly version</releaseNotes>
-    <copyright />
+    <releaseNotes>* Performance Improvements
+* Fix for deleted row in a data table
+* Added ability to ignore the collection order
+* Fix for Ignoring by Attributes</releaseNotes>
     <language>en-US</language>
     <tags>compare comparison objects difference</tags>
-    <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework3.5" />
-      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.0" />
-    </frameworkAssemblies>
   </metadata>
 </package>

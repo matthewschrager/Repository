@@ -87,6 +87,12 @@
             The default is true.
             </summary>
         </member>
+        <member name="P:KellermanSoftware.CompareNetObjects.ICompareObjects.IgnoreCollectionOrder">
+            <summary>
+            If true, compare each item within a collection to every item in the other (warning, setting this to true significantly impacts performance).
+            The default is false.
+            </summary>
+        </member>
         <member name="P:KellermanSoftware.CompareNetObjects.ICompareObjects.CompareProperties">
             <summary>
             If true, compare properties of a class (see also CompareFields).
@@ -448,7 +454,7 @@
             <param name="type"></param>
             <returns></returns>
         </member>
-        <member name="M:KellermanSoftware.CompareNetObjects.CompareObjects.IgnoredByAttribute(System.Type)">
+        <member name="M:KellermanSoftware.CompareNetObjects.CompareObjects.IgnoredByAttribute(System.Reflection.MemberInfo)">
             <summary>
             Check if any type has attributes that should be bypassed
             </summary>
@@ -504,6 +510,11 @@
             <param name="extra"></param>
             <param name="index"></param>
             <returns></returns>
+        </member>
+        <member name="P:KellermanSoftware.CompareNetObjects.CompareObjects.ElapsedMilliseconds">
+            <summary>
+            The amount of time in milliseconds it took for the comparison
+            </summary>
         </member>
         <member name="P:KellermanSoftware.CompareNetObjects.CompareObjects.ShowBreadcrumb">
             <summary>
@@ -562,6 +573,12 @@
             <summary>
             If true, compare fields of a class (see also CompareProperties).
             The default is true.
+            </summary>
+        </member>
+        <member name="P:KellermanSoftware.CompareNetObjects.CompareObjects.IgnoreCollectionOrder">
+            <summary>
+            If true, compare each item within a collection to every item in the other (warning, setting this to true significantly impacts performance).
+            The default is false.
             </summary>
         </member>
         <member name="P:KellermanSoftware.CompareNetObjects.CompareObjects.CompareProperties">
