@@ -29,6 +29,7 @@ namespace Repository
         {
             ID = key;
             StringValue = value1;
+            List = new List<int> { 1, 2, 3 };
         }
         //===============================================================
         public String ID { get; set; }
@@ -38,6 +39,8 @@ namespace Repository
         public int IntValue { get; set; }
         //===============================================================
         public Guid Guid { get; set; }
+        //===============================================================
+        public List<int> List { get; set; }
         //===============================================================
     }
 

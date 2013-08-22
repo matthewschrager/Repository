@@ -5,6 +5,7 @@ namespace Repository.Testing
 {
         internal class InMemoryRepositoryTests
         {
+            //================================================================================
             [Test]
             public void Standard()
             {

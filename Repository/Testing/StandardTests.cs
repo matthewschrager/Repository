@@ -86,6 +86,13 @@ namespace Repository.Testing
             storedObj = repo.Find(obj.ID);
             Assert.AreEqual("newValue", storedObj.Object.StringValue);
 
+            // Test changing list item
+            storedObj.Object.List.Add(4);
+            repo.SaveChanges();
+
+            storedObj = repo.Find(obj.ID);
+            Assert.AreEqual(4, storedObj.Object.List.Count);
+
             // Test Update function
             repo.Update(new { StringValue = "newValue2" }, storedObj.Object.ID);
             repo.SaveChanges();

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Repository
 {
-    public class ReadOnlyRepository<T>
+    public class ReadOnlyRepository<T> : IDisposable
     {
         //================================================================================
         public ReadOnlyRepository(Repository<T> innerRepository)
@@ -36,9 +36,14 @@ namespace Repository
             get { return InnerRepository.Items; }
         }
         //================================================================================
+        public void Dispose()
+        {
+            InnerRepository.Dispose();
+        }
+        //================================================================================
     }
 
-    public class ReadOnlyRepository<TValue, TKey>
+    public class ReadOnlyRepository<TValue, TKey> : IDisposable
     {
         //================================================================================
         public ReadOnlyRepository(Repository<TValue, TKey> innerRepository)
@@ -68,9 +73,14 @@ namespace Repository
             get { return InnerRepository.Items; }
         }
         //================================================================================
+        public void Dispose()
+        {
+            InnerRepository.Dispose();
+        }
+        //================================================================================
     }
 
-    public class ReadOnlyRepository<TValue, TKey1, TKey2>
+    public class ReadOnlyRepository<TValue, TKey1, TKey2> : IDisposable
     {
         //================================================================================
         public ReadOnlyRepository(Repository<TValue, TKey1, TKey2> innerRepository)
@@ -98,6 +108,11 @@ namespace Repository
         public EnumerableObjectContext<TValue> Items
         {
             get { return InnerRepository.Items; }
+        }
+        //================================================================================
+        public void Dispose()
+        {
+            InnerRepository.Dispose();
         }
         //================================================================================
     }
