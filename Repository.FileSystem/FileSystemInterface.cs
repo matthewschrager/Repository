@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
 
 namespace Repository.FileSystem
 {
@@ -96,6 +97,10 @@ namespace Repository.FileSystem
         //===============================================================
         public IQueryable<T> EnumerateObjects()
         {
+            var path = GetFolderPath();
+            if (!Directory.Exists(path))
+                return new List<T>().AsQueryable();
+
             var files = Directory.EnumerateFiles(GetFolderPath());
             return files.Select(x => GetObject(x).Object).AsQueryable();
         }

@@ -24,6 +24,23 @@ namespace Repository.FileSystem
             StandardTests.All(gzipRepo);
         }
         //===============================================================
+        [Test]
+        public void MultipleKeys()
+        {
+            using (var repo = new FileSystemRepository<TestClass, String, String>(x => Tuple.Create(x.ID, x.StringValue)))
+            {
+                var obj = new TestClass("key", "value");
+                repo.Insert(obj);
+                repo.SaveChanges();
+
+                Assert.AreEqual(1, repo.Items.Count());
+
+                repo.Remove(obj);
+                repo.SaveChanges();
+                Assert.AreEqual(0, repo.Items.Count());
+            }
+        }
+        //================================================================================
     }
 
 
