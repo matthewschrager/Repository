@@ -17,8 +17,8 @@ namespace Repository.FileSystem
         [Test]
         public void Standard()
         {
-            var implicitKeyRepo = new FileSystemRepository<TestClass>(x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories" });
-            var gzipRepo = new FileSystemRepository<TestClass>(x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories", StreamGenerator = new GZipStreamGenerator(), FileExtension = ".txt.gz" });
+            var implicitKeyRepo = new FileSystemRepository<TestClass>("Test", x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories" });
+            var gzipRepo = new FileSystemRepository<TestClass>("Test", x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories", StreamGenerator = new GZipStreamGenerator(), FileExtension = ".txt.gz" });
             
             StandardTests.All(implicitKeyRepo);
             StandardTests.All(gzipRepo);
@@ -27,7 +27,7 @@ namespace Repository.FileSystem
         [Test]
         public void MultipleKeys()
         {
-            using (var repo = new FileSystemRepository<TestClass, String, String>(x => Tuple.Create(x.ID, x.StringValue)))
+            using (var repo = new FileSystemRepository<TestClass, String, String>("Test", x => Tuple.Create(x.ID, x.StringValue)))
             {
                 var obj = new TestClass("key", "value");
                 repo.Insert(obj);

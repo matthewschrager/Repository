@@ -9,15 +9,15 @@ namespace Repository.FileSystem
     public class FileSystemRepository<T> : Repository<T>
     {
         //===============================================================
-        public FileSystemRepository(Func<T, object[]> keySelector, FileSystemOptions<T> options = null)
+        public FileSystemRepository(String name, Func<T, object[]> keySelector, FileSystemOptions<T> options = null)
             : base(keySelector)
         {
             options = options ?? new FileSystemOptions<T>();
-            FileSystemInterface = new FileSystemInterface<T>(options);
+            FileSystemInterface = new FileSystemInterface<T>(name, keySelector, options);
         }
         //===============================================================
-        public FileSystemRepository(Func<T, object> keySelector, FileSystemOptions<T> options = null)
-            : this(x => new[] { keySelector(x) }, options)
+        public FileSystemRepository(String name, Func<T, object> keySelector, FileSystemOptions<T> options = null)
+            : this(name, x => new[] { keySelector(x) }, options)
         {}
         //===============================================================
         private FileSystemInterface<T> FileSystemInterface { get; set; }
@@ -63,8 +63,8 @@ namespace Repository.FileSystem
     public class FileSystemRepository<TValue, TKey> : Repository<TValue, TKey>
     {
         //===============================================================
-        public FileSystemRepository(Func<TValue, TKey> keySelector, FileSystemOptions<TValue> options = null)
-            : base(new FileSystemRepository<TValue>(x => keySelector(x), options))
+        public FileSystemRepository(String name, Func<TValue, TKey> keySelector, FileSystemOptions<TValue> options = null)
+            : base(new FileSystemRepository<TValue>(name, x => keySelector(x), options))
         {}
         //===============================================================
     }
@@ -72,8 +72,8 @@ namespace Repository.FileSystem
     public class FileSystemRepository<TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2>
     {
         //===============================================================
-        public FileSystemRepository(Func<TValue, Tuple<TKey1, TKey2>> keySelector, FileSystemOptions<TValue> options = null)
-            : base(new FileSystemRepository<TValue>(x => new object[] { keySelector(x).Item1, keySelector(x).Item2 }, options))
+        public FileSystemRepository(String name, Func<TValue, Tuple<TKey1, TKey2>> keySelector, FileSystemOptions<TValue> options = null)
+            : base(new FileSystemRepository<TValue>(name, x => new object[] { keySelector(x).Item1, keySelector(x).Item2 }, options))
         {}
         //===============================================================
     }
@@ -82,8 +82,8 @@ namespace Repository.FileSystem
     public class ExplicitKeyFileSystemRepository<T> : ExplicitKeyRepository<T>
     {
         //===============================================================
-        public ExplicitKeyFileSystemRepository(FileSystemOptions<T> options = null)
-            : base(new FileSystemRepository<T>(NullKeySelector, options))
+        public ExplicitKeyFileSystemRepository(String name, FileSystemOptions<T> options = null)
+            : base(new FileSystemRepository<T>(name, NullKeySelector, options))
         {}
         //===============================================================
 
@@ -92,8 +92,8 @@ namespace Repository.FileSystem
     public class ExplicitKeyFileSystemRepository<TValue, TKey> : ExplicitKeyRepository<TValue, TKey>
     {
         //===============================================================
-        public ExplicitKeyFileSystemRepository(FileSystemOptions<TValue> options = null)
-            : base(new FileSystemRepository<TValue>(NullKeySelector, options))
+        public ExplicitKeyFileSystemRepository(String name, FileSystemOptions<TValue> options = null)
+            : base(new FileSystemRepository<TValue>(name, NullKeySelector, options))
         { }
         //===============================================================
     }
@@ -101,8 +101,8 @@ namespace Repository.FileSystem
     public class ExplicitKeyFileSystemRepository<TValue, TKey1, TKey2> : ExplicitKeyRepository<TValue, TKey1, TKey2>
     {
         //===============================================================
-        public ExplicitKeyFileSystemRepository(FileSystemOptions<TValue> options = null)
-            : base(new FileSystemRepository<TValue>(NullKeySelector, options))
+        public ExplicitKeyFileSystemRepository(String name, FileSystemOptions<TValue> options = null)
+            : base(new FileSystemRepository<TValue>(name, NullKeySelector, options))
         { }
         //===============================================================
     }

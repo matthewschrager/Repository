@@ -14,20 +14,20 @@ namespace Repository.FileSystem
         //===============================================================
         public FileSystemOptions()
         {
-            Serializer = new JsonSerializer<T>();
+            Serializer = new JsonSerializer<IEnumerable<T>>();
             FolderPath = "";
             FileExtension = ".txt";
             StreamGenerator = new StandardStreamGenerator();
         }
         //===============================================================
-        public ISerializer<T> Serializer { get; set; }
+        public ISerializer<IEnumerable<T>> Serializer { get; set; }
         //===============================================================
         public String FolderPath { get; set; }
         //===============================================================
         public String FileExtension { get; set; }
         //===============================================================
         public StreamGenerator StreamGenerator { get; set; }
-        //================================================================================
+        //===============================================================
     }
 
     public abstract class StreamGenerator

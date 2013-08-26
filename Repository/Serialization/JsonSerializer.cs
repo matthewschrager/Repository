@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Repository.Serialization
@@ -17,4 +18,5 @@ namespace Repository.Serialization
         }
         //===============================================================
     }
+
 }

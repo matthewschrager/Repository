@@ -11,12 +11,18 @@ namespace Repository.FileSystem
     internal class FileSystemInterface<T>
     {
         //===============================================================
-        public FileSystemInterface(FileSystemOptions<T> options)
+        public FileSystemInterface(String repoName, Func<T, object[]> keySelector, FileSystemOptions<T> options)
         {
             Options = options;
+            RepositoryName = repoName;
+            KeySelector = keySelector;
         }
+        //================================================================================
+        private Func<T, object[]> KeySelector { get; set; } 
         //===============================================================
         private FileSystemOptions<T> Options { get; set; }
+        //================================================================================
+        private String RepositoryName { get; set; }
         //===============================================================
         private static String SanitizeName(String name, IEnumerable<char> invalidCharacters, char legalDelimiter = '-')
         {
@@ -34,60 +40,80 @@ namespace Repository.FileSystem
 
             return name;
         }
+        //================================================================================
+        private String GetObjectKey(IEnumerable<Object> keys)
+        {
+            return keys.Aggregate("", (curr, next) => curr + "-" + next);
+        }
         //===============================================================
         private String GetFolderPath()
         {
             return Path.Combine(Options.FolderPath, SanitizeName(GetSanitizedTypeName(typeof(T)), Path.GetInvalidPathChars()));
         }
         //===============================================================
-        private String GetFilePath(IEnumerable<object> keys)
+        private String GetRepositoryPath()
         {
-            var fileName = keys.Select(x => x.ToString()).Aggregate((curr, next) => curr + "-" + next);
-            fileName = SanitizeName(fileName, Path.GetInvalidFileNameChars());
-
-            return Path.Combine(GetFolderPath(), fileName) + Options.FileExtension;
+            return Path.Combine(GetFolderPath(), SanitizeName(RepositoryName, Path.GetInvalidFileNameChars())) + Options.FileExtension;
         }
         //===============================================================
-        public void StoreObject(T value, IEnumerable<object> keys)
+        private IEnumerable<T> RetrieveObjects()
         {
-            var filePath = GetFilePath(keys);
+            var filePath = GetRepositoryPath();
+            if (!File.Exists(filePath))
+                return new List<T>();
+
+            using (var reader = new StreamReader(Options.StreamGenerator.GetReadStream(filePath)))
+            {
+                var str = reader.ReadToEnd();
+                var objects = Options.Serializer.Deserialize(str);
+                return objects;
+            }
+        }
+        //===============================================================
+        private void SaveObjects(IEnumerable<T> objects)
+        {
+            var filePath = GetRepositoryPath();
             if (!Directory.Exists(Path.GetDirectoryName(filePath)))
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
             using (var writer = new StreamWriter(Options.StreamGenerator.GetWriteStream(filePath)))
             {
-                writer.Write(Options.Serializer.Serialize(value));
+                writer.Write(Options.Serializer.Serialize(objects));
                 writer.Flush();
             }
         }
         //===============================================================
-        public ObjectContext<T> GetObject(IEnumerable<object> keys)
+        public void StoreObject(T value, IEnumerable<object> keys)
         {
-            var path = GetFilePath(keys);
-            if (!File.Exists(path))
-                return null;
+            var objKey = GetObjectKey(keys);
+            var objects = RetrieveObjects().ToDictionary(x => GetObjectKey(KeySelector(x)));
+            objects[objKey] = value;
 
-            return GetObject(path);
+            SaveObjects(objects.Values);
         }
         //===============================================================
-        private ObjectContext<T> GetObject(String path)
+        public ObjectContext<T> GetObject(IEnumerable<object> keys)
         {
-            using (var reader = new StreamReader(Options.StreamGenerator.GetReadStream(path)))
-            {
-                var str = reader.ReadToEnd();
-                var obj = Options.Serializer.Deserialize(str);
-                return new ObjectContext<T>(obj);
-            }
+            var key = GetObjectKey(keys);
+            var objects = RetrieveObjects().ToDictionary(x => GetObjectKey(KeySelector(x)));
+            
+            T obj;
+            if (!objects.TryGetValue(key, out obj))
+                return null;
+
+            return new ObjectContext<T>(obj);
         }
         //===============================================================
         public bool Exists(IEnumerable<object> keys)
         {
-            return File.Exists(GetFilePath(keys));
+            return RetrieveObjects().ToDictionary(x => GetObjectKey(KeySelector(x))).ContainsKey(GetObjectKey(keys));
         }
         //===============================================================
         public void DeleteObject(IEnumerable<object> keys)
         {
-            File.Delete(GetFilePath(keys));
+            var objects = RetrieveObjects().ToDictionary(x => GetObjectKey(KeySelector(x)));
+            objects.Remove(GetObjectKey(keys));
+            SaveObjects(objects.Values);
         }
         //===============================================================
         public void DeleteFolder()
@@ -97,12 +123,7 @@ namespace Repository.FileSystem
         //===============================================================
         public IQueryable<T> EnumerateObjects()
         {
-            var path = GetFolderPath();
-            if (!Directory.Exists(path))
-                return new List<T>().AsQueryable();
-
-            var files = Directory.EnumerateFiles(GetFolderPath());
-            return files.Select(x => GetObject(x).Object).AsQueryable();
+            return RetrieveObjects().AsQueryable();
         }
         //===============================================================
     }
