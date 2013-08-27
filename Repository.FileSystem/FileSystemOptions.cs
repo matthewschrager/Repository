@@ -18,6 +18,7 @@ namespace Repository.FileSystem
             FolderPath = "";
             FileExtension = ".txt";
             StreamGenerator = new StandardStreamGenerator();
+            UseTypeNameFolder = false;
         }
         //===============================================================
         public ISerializer<IEnumerable<T>> Serializer { get; set; }
@@ -28,6 +29,8 @@ namespace Repository.FileSystem
         //===============================================================
         public StreamGenerator StreamGenerator { get; set; }
         //===============================================================
+        public bool UseTypeNameFolder { get; set; }
+        //================================================================================
     }
 
     public abstract class StreamGenerator

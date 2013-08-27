@@ -46,14 +46,17 @@ namespace Repository.FileSystem
             return keys.Aggregate("", (curr, next) => curr + "-" + next);
         }
         //===============================================================
-        private String GetFolderPath()
+        private String GetBaseFolderPath()
         {
-            return Path.Combine(Options.FolderPath, SanitizeName(GetSanitizedTypeName(typeof(T)), Path.GetInvalidPathChars()));
+            if (Options.UseTypeNameFolder)
+                return Path.Combine(Options.FolderPath, SanitizeName(GetSanitizedTypeName(typeof(T)), Path.GetInvalidPathChars()));
+            else
+                return Options.FolderPath;
         }
         //===============================================================
         private String GetRepositoryPath()
         {
-            return Path.Combine(GetFolderPath(), SanitizeName(RepositoryName, Path.GetInvalidFileNameChars())) + Options.FileExtension;
+            return Path.Combine(GetBaseFolderPath(), SanitizeName(RepositoryName, Path.GetInvalidFileNameChars())) + Options.FileExtension;
         }
         //===============================================================
         private IEnumerable<T> RetrieveObjects()
@@ -73,7 +76,7 @@ namespace Repository.FileSystem
         private void SaveObjects(IEnumerable<T> objects)
         {
             var filePath = GetRepositoryPath();
-            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+            if (!String.IsNullOrWhiteSpace(Path.GetDirectoryName(filePath)) && !Directory.Exists(Path.GetDirectoryName(filePath)))
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
             using (var writer = new StreamWriter(Options.StreamGenerator.GetWriteStream(filePath)))
@@ -118,7 +121,7 @@ namespace Repository.FileSystem
         //===============================================================
         public void DeleteFolder()
         {
-            Directory.Delete(GetFolderPath());
+            Directory.Delete(GetBaseFolderPath());
         }
         //===============================================================
         public IQueryable<T> EnumerateObjects()
