@@ -25,7 +25,7 @@ namespace Repository.Azure
             Options.ContainerName = Options.ContainerName != null ? AzureUtility.SanitizeContainerName(Options.ContainerName) : AzureUtility.GetSanitizedContainerName<T>();
 
             AzureContainerInterface = new AzureContainerInterface<T>(storageAccount, Options);
-            PendingChanges = new List<Operation>();
+            PendingChanges = new List<IOperation>();
         }
         //===============================================================
         public static AzureRepository<T> FromExplicitConnectionString(Func<T, object[]> keySelector, String connectionString, AzureOptions<T> options = null)
@@ -66,7 +66,7 @@ namespace Repository.Azure
         //===============================================================
         private AzureContainerInterface<T> AzureContainerInterface { get; set; }
         //===============================================================
-        private IList<Operation> PendingChanges { get; set; }
+        private IList<IOperation> PendingChanges { get; set; }
         //===============================================================
         protected override Insert<T> CreateInsert(IEnumerable<object> keys, T value)
         {

@@ -26,6 +26,11 @@ namespace Repository.FileSystem
         {
             return new FileSystemInsert<T>(keys, value, FileSystemInterface);
         }
+        //================================================================================
+        protected override BatchInsert<T> CreateBatchInsert(IEnumerable<KeyValuePair<IEnumerable<object>, T>> keyValuePairs)
+        {
+            return new FileSystemBatchInsert<T>(keyValuePairs, FileSystemInterface);
+        }
         //===============================================================
         protected override Remove CreateRemove(IEnumerable<object> keys)
         {

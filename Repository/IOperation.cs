@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace Repository
 {
-    public interface Operation
+    public interface IOperation
     {
         //===============================================================
         void Apply();
         //===============================================================
     }
 
-    public abstract class Insert<TValue> : Operation
+    public abstract class Insert<TValue> : IOperation
     {
         //===============================================================
         public Insert(IEnumerable<Object> keys, TValue value)
@@ -30,7 +30,7 @@ namespace Repository
         //===============================================================
     }
 
-    public abstract class Remove : Operation
+    public abstract class Remove : IOperation
     {
         //===============================================================
         public Remove(IEnumerable<Object> keys)
@@ -44,7 +44,7 @@ namespace Repository
         //===============================================================
     }
 
-    public abstract class Modify<T> : Operation
+    public abstract class Modify<T> : IOperation
     {
         //===============================================================
         public Modify(IEnumerable<Object> keys, T value, Action<T> modifier)
@@ -62,5 +62,39 @@ namespace Repository
         //===============================================================
         public abstract void Apply();
         //===============================================================
+    }
+
+    public abstract class BatchInsert<TValue> : IOperation
+    {
+        //================================================================================
+        public BatchInsert(IEnumerable<KeyValuePair<IEnumerable<Object>, TValue>> keyValuePairs)
+        {
+            KeyValuePairs = keyValuePairs;
+        }
+        //================================================================================
+        public IEnumerable<KeyValuePair<IEnumerable<Object>, TValue>> KeyValuePairs { get; private set; } 
+        //================================================================================
+        public abstract void Apply();
+        //================================================================================
+    }
+
+    public class DefaultBatchInsert<TValue> : BatchInsert<TValue>
+    {
+        //================================================================================
+        public DefaultBatchInsert(IEnumerable<KeyValuePair<IEnumerable<Object>, TValue>> keyValuePairs, Func<IEnumerable<Object>, TValue, Insert<TValue>> singleInsertGenerator)
+            : base(keyValuePairs)
+        {
+            SingleInsertGenerator = singleInsertGenerator;
+        }
+        //================================================================================
+        public Func<IEnumerable<Object>, TValue, Insert<TValue>> SingleInsertGenerator { get; private set; } 
+        //================================================================================
+        public override void Apply()
+        {
+            var inserts = KeyValuePairs.Select(x => SingleInsertGenerator(x.Key, x.Value)).ToList();
+            foreach (var insert in inserts)
+                insert.Apply();
+        }
+        //================================================================================
     }
 }

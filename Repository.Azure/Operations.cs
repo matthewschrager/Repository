@@ -44,7 +44,7 @@ namespace Repository.Azure
         //===============================================================
     }
 
-    internal class AzureRemoveAll<T> : Operation
+    internal class AzureRemoveAll<T> : IOperation
     {
         //===============================================================
         public AzureRemoveAll(AzureContainerInterface<T> azureContainerInterface)

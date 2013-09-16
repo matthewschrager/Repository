@@ -41,6 +41,36 @@ namespace Repository.FileSystem
             }
         }
         //================================================================================
+        [Test]
+        public void LockingTest()
+        {
+            Task.Factory.StartNew(() =>
+            {
+                using (var repo = new FileSystemRepository<TestClass, String, String>("Test", x => Tuple.Create(x.ID, x.StringValue)))
+                {
+                    var obj = new TestClass("key", "value");
+                    repo.Insert(obj);
+                    repo.SaveChanges();
+
+                    repo.Remove(obj);
+                    repo.SaveChanges();
+                }
+            });
+
+            Task.Factory.StartNew(() =>
+            {
+                using (var repo = new FileSystemRepository<TestClass, String, String>("Test", x => Tuple.Create(x.ID, x.StringValue)))
+                {
+                    var obj = new TestClass("key", "value");
+                    repo.Insert(obj);
+                    repo.SaveChanges();
+
+                    repo.Remove(obj);
+                    repo.SaveChanges();
+                }
+            });
+        }
+        //================================================================================
     }
 
 

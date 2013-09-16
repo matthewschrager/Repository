@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,9 @@ namespace Repository.FileSystem
 {
     internal class FileSystemInterface<T>
     {
+        // We have to keep a static dictionary of file locks for each path
+        private static IDictionary<String, Object> FileLocks = new ConcurrentDictionary<string, object>(); 
+
         //===============================================================
         public FileSystemInterface(String repoName, Func<T, object[]> keySelector, FileSystemOptions<T> options)
         {
@@ -41,6 +45,17 @@ namespace Repository.FileSystem
             return name;
         }
         //================================================================================
+        private static Object GetFileLock(String path)
+        {
+            Object obj;
+            if (FileLocks.TryGetValue(path, out obj))
+                return obj;
+
+            obj = new object();
+            FileLocks[path] = obj;
+            return obj;
+        }
+        //================================================================================
         private String GetObjectKey(IEnumerable<Object> keys)
         {
             return keys.Aggregate("", (curr, next) => curr + "-" + next);
@@ -62,27 +77,33 @@ namespace Repository.FileSystem
         private IEnumerable<T> RetrieveObjects()
         {
             var filePath = GetRepositoryPath();
-            if (!File.Exists(filePath))
-                return new List<T>();
-
-            using (var reader = new StreamReader(Options.StreamGenerator.GetReadStream(filePath)))
+            lock (GetFileLock(filePath))
             {
-                var str = reader.ReadToEnd();
-                var objects = Options.Serializer.Deserialize(str);
-                return objects;
+                if (!File.Exists(filePath))
+                    return new List<T>();
+
+                using (var reader = new StreamReader(Options.StreamGenerator.GetReadStream(filePath)))
+                {
+                    var str = reader.ReadToEnd();
+                    var objects = Options.Serializer.Deserialize(str);
+                    return objects;
+                }
             }
         }
         //===============================================================
         private void SaveObjects(IEnumerable<T> objects)
         {
             var filePath = GetRepositoryPath();
-            if (!String.IsNullOrWhiteSpace(Path.GetDirectoryName(filePath)) && !Directory.Exists(Path.GetDirectoryName(filePath)))
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-
-            using (var writer = new StreamWriter(Options.StreamGenerator.GetWriteStream(filePath)))
+            lock (GetFileLock(filePath))
             {
-                writer.Write(Options.Serializer.Serialize(objects));
-                writer.Flush();
+                if (!String.IsNullOrWhiteSpace(Path.GetDirectoryName(filePath)) && !Directory.Exists(Path.GetDirectoryName(filePath)))
+                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+
+                using (var writer = new StreamWriter(Options.StreamGenerator.GetWriteStream(filePath)))
+                {
+                    writer.Write(Options.Serializer.Serialize(objects));
+                    writer.Flush();
+                }
             }
         }
         //===============================================================
@@ -91,6 +112,15 @@ namespace Repository.FileSystem
             var objKey = GetObjectKey(keys);
             var objects = RetrieveObjects().ToDictionary(x => GetObjectKey(KeySelector(x)));
             objects[objKey] = value;
+
+            SaveObjects(objects.Values);
+        }
+        //================================================================================
+        public void StoreObjects(IEnumerable<KeyValuePair<IEnumerable<object>, T>> keyValuePairs)
+        {
+            var objects = RetrieveObjects().ToDictionary(x => GetObjectKey(KeySelector(x)));
+            foreach (var newValue in keyValuePairs)
+                objects[GetObjectKey(newValue.Key)] = newValue.Value;
 
             SaveObjects(objects.Values);
         }

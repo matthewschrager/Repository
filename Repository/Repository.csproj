@@ -78,7 +78,7 @@
     <Compile Include="Serialization\JsonSerializer.cs" />
     <Compile Include="Serialization\NullSerializer.cs" />
     <Compile Include="Testing\Tests.cs" />
-    <Compile Include="Operation.cs" />
+    <Compile Include="IOperation.cs" />
     <Compile Include="Repository.cs" />
     <Compile Include="ObjectContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

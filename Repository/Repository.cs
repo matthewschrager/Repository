@@ -12,7 +12,7 @@ namespace Repository
         {
             KeySelector = keySelector;
             UnsavedObjects = new List<ChangeTracker<T>>();
-            PendingOperations = new List<Operation>();
+            PendingOperations = new List<IOperation>();
 
             IgnoreChangeTracking = ignoreChangeTracking;
         }
@@ -23,9 +23,14 @@ namespace Repository
         //===============================================================
         private List<ChangeTracker<T>> UnsavedObjects { get; set; }
         //===============================================================
-        private List<Operation> PendingOperations { get; set; }
+        private List<IOperation> PendingOperations { get; set; }
         //===============================================================
         protected abstract Insert<T> CreateInsert(IEnumerable<object> keys, T value);
+        //================================================================================
+        protected virtual BatchInsert<T> CreateBatchInsert(IEnumerable<KeyValuePair<IEnumerable<object>, T>> keyValuePairs)
+        {
+            return new DefaultBatchInsert<T>(keyValuePairs, CreateInsert);
+        }
         //===============================================================
         protected abstract Remove CreateRemove(IEnumerable<object> keys);
         //===============================================================
@@ -41,7 +46,7 @@ namespace Repository
             UnsavedObjects.Add(new ChangeTracker<T>(obj, KeySelector));
         }
         //===============================================================
-        protected void AddPendingOperation(Operation operation)
+        private void AddPendingOperation(IOperation operation)
         {
             PendingOperations.Add(operation);
         }
@@ -53,8 +58,7 @@ namespace Repository
         //===============================================================
         public void Insert(IEnumerable<T> values)
         {
-            foreach (var value in values)
-                Insert(value);
+            AddPendingOperation(CreateBatchInsert(values.Select(x => new KeyValuePair<IEnumerable<object>, T>(KeySelector(x), x))));
         }
         //===============================================================
         public void Remove(T obj)
@@ -65,7 +69,7 @@ namespace Repository
         public void RemoveAll(IEnumerable<T> objects = null)
         {
             if (objects == null)
-                PendingOperations.RemoveAll(x => x is Insert<T>);
+                PendingOperations.RemoveAll(x => x is Insert<T> || x is BatchInsert<T>);
 
             objects = objects ?? Items;
             RemoveAllByKey(objects.Select(x => KeySelector(x)));

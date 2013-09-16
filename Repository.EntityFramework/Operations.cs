@@ -44,7 +44,7 @@ namespace Repository.EntityFramework
         //===============================================================
     }
 
-    internal class EFRemoveAll<TValue, TContext> : Operation
+    internal class EFRemoveAll<TValue, TContext> : IOperation
         where TContext : DbContext
         where TValue : class
     {

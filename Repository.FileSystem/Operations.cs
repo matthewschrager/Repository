@@ -24,6 +24,24 @@ namespace Repository.FileSystem
         //===============================================================
     }
 
+    internal class FileSystemBatchInsert<T> : BatchInsert<T>
+    {
+        //================================================================================
+        public FileSystemBatchInsert(IEnumerable<KeyValuePair<IEnumerable<object>, T>> keyValuePairs, FileSystemInterface<T> fsInterface)
+            : base(keyValuePairs)
+        {
+            FileSystemInterface = fsInterface;
+        }
+        //================================================================================
+        private FileSystemInterface<T> FileSystemInterface { get; set; } 
+        //================================================================================
+        public override void Apply()
+        {
+            FileSystemInterface.StoreObjects(KeyValuePairs);
+        }
+        //================================================================================
+    }
+
     internal class FileSystemRemove<T> : Remove
     {
         //===============================================================
@@ -42,7 +60,7 @@ namespace Repository.FileSystem
         //===============================================================
     }
 
-    internal class FileSystemRemoveAll<T> : Operation
+    internal class FileSystemRemoveAll<T> : IOperation
     {
         //===============================================================
         public FileSystemRemoveAll(FileSystemInterface<T> fsInterface)
