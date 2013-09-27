@@ -57,6 +57,11 @@ namespace Repository.FileSystem
             get { return new EnumerableObjectContext<T>(FileSystemInterface.EnumerateObjects(), this); }
         }
         //===============================================================
+        public override void OnKeySelectorChanged(Func<T, object[]> newKeySelector)
+        {
+            FileSystemInterface.KeySelector = newKeySelector;
+        }
+        //===============================================================
         public override void Dispose()
         {
             // Don't do anything, nothing to dispose

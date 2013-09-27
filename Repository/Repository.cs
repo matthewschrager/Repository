@@ -178,6 +178,12 @@ namespace Repository
         internal void SetKeySelector(Func<T, object[]> keySelector)
         {
             KeySelector = keySelector;
+            OnKeySelectorChanged(keySelector);
+        }
+        //================================================================================
+        public virtual void OnKeySelectorChanged(Func<T, object[]> newKeySelector)
+        {
+            // Do nothing by default
         }
         //===============================================================
         public ReadOnlyRepository<T> AsReadOnly()

@@ -22,7 +22,7 @@ namespace Repository.FileSystem
             KeySelector = keySelector;
         }
         //================================================================================
-        private Func<T, object[]> KeySelector { get; set; } 
+        public Func<T, object[]> KeySelector { get; set; } 
         //===============================================================
         private FileSystemOptions<T> Options { get; set; }
         //================================================================================
