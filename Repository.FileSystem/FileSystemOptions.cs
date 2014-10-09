@@ -47,7 +47,7 @@ namespace Repository.FileSystem
         //================================================================================
         public override Stream GetReadStream(string filePath)
         {
-            return new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
         //================================================================================
         public override Stream GetWriteStream(string filePath)
@@ -62,7 +62,7 @@ namespace Repository.FileSystem
         //================================================================================
         public override Stream GetReadStream(string filePath)
         {
-            return new GZipStream(new FileStream(filePath, FileMode.Open, FileAccess.Read), CompressionMode.Decompress);
+            return new GZipStream(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite), CompressionMode.Decompress);
         }
         //================================================================================
         public override Stream GetWriteStream(string filePath)
