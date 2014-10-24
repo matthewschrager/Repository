@@ -60,23 +60,6 @@ namespace Repository.FileSystem
         //===============================================================
     }
 
-    internal class FileSystemRemoveAll<T> : IOperation
-    {
-        //===============================================================
-        public FileSystemRemoveAll(FileSystemInterface<T> fsInterface)
-        {
-            FileSystemInterface = fsInterface;
-        }
-        //===============================================================
-        private FileSystemInterface<T> FileSystemInterface { get; set; }
-        //===============================================================
-        public void Apply()
-        {
-            FileSystemInterface.DeleteFolder();
-        }
-        //===============================================================
-    }
-
     internal class FileSystemModify<T> : Modify<T>
     {
         //===============================================================

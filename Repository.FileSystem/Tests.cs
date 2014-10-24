@@ -20,9 +20,11 @@ namespace Repository.FileSystem
             var implicitKeyRepo = new FileSystemRepository<TestClass>("Test", x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories" });
             var gzipRepo = new FileSystemRepository<TestClass>("Test", x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories", StreamGenerator = new GZipStreamGenerator(), FileExtension = ".txt.gz" });
             var explicitKeyRepo = new ExplicitKeyFileSystemRepository<TestClass>("Test", new FileSystemOptions<TestClass> { FolderPath = "Tests/ExplicitKeyRepositories" });
+            var multipleFileRepo = new FileSystemRepository<TestClass>("Test", x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "Tests/ImplicitKeyRepositories", FileStorageType = FileStorageType.FilePerObject });
             
             StandardTests.All(implicitKeyRepo, null, explicitKeyRepo);
             StandardTests.All(gzipRepo);
+            StandardTests.All(multipleFileRepo);
         }
         //===============================================================
         [Test]

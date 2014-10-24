@@ -19,6 +19,7 @@ namespace Repository.FileSystem
             FileExtension = ".txt";
             StreamGenerator = new StandardStreamGenerator();
             UseTypeNameFolder = false;
+            FileStorageType = FileStorageType.SingleFile;
         }
         //===============================================================
         public ISerializer<IEnumerable<T>> Serializer { get; set; }
@@ -30,7 +31,15 @@ namespace Repository.FileSystem
         public StreamGenerator StreamGenerator { get; set; }
         //===============================================================
         public bool UseTypeNameFolder { get; set; }
-        //================================================================================
+        //===============================================================
+        public FileStorageType FileStorageType { get; set; }
+        //===============================================================
+    }
+
+    public enum FileStorageType
+    {
+        SingleFile,
+        FilePerObject
     }
 
     public abstract class StreamGenerator

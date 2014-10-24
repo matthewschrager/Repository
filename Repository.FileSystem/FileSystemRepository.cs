@@ -13,7 +13,7 @@ namespace Repository.FileSystem
             : base(keySelector)
         {
             options = options ?? new FileSystemOptions<T>();
-            FileSystemInterface = new FileSystemInterface<T>(name, keySelector, options);
+            FileSystemInterface = options.FileStorageType == FileStorageType.SingleFile ? (FileSystemInterface<T>)new SingleFileSystemInterface<T>(name, keySelector, options) : new MultipleFileSystemInterface<T>(name, keySelector, options);
         }
         //===============================================================
         public FileSystemRepository(String name, Func<T, object> keySelector, FileSystemOptions<T> options = null)
@@ -54,7 +54,7 @@ namespace Repository.FileSystem
         //===============================================================
         public override EnumerableObjectContext<T> Items
         {
-            get { return new EnumerableObjectContext<T>(FileSystemInterface.EnumerateObjects(), this); }
+            get { return new EnumerableObjectContext<T>(FileSystemInterface.EnumerateObjects().AsQueryable(), this); }
         }
         //===============================================================
         public override void OnKeySelectorChanged(Func<T, object[]> newKeySelector)

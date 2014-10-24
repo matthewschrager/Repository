@@ -50,7 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileSystemInterface.cs" />
+    <Compile Include="SingleFileSystemInterface.cs" />
     <Compile Include="FileSystemOptions.cs" />
     <Compile Include="FileSystemRepository.cs" />
     <Compile Include="Operations.cs" />
