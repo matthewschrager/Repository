@@ -11,7 +11,7 @@ namespace Repository.Serialization
         public void Serialize(T obj, Stream stream)
         {
             var writer = new StreamWriter(stream);
-            writer.Write(JsonConvert.SerializeObject(obj));
+            writer.Write(JsonConvert.SerializeObject(obj, Formatting.Indented));
             writer.Flush();
         }
         //===============================================================

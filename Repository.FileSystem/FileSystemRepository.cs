@@ -62,6 +62,11 @@ namespace Repository.FileSystem
             FileSystemInterface.KeySelector = newKeySelector;
         }
         //===============================================================
+        public void CreateBackup()
+        {
+            FileSystemInterface.CreateBackup();
+        }
+        //===============================================================
         public override void Dispose()
         {
             // Don't do anything, nothing to dispose

@@ -43,7 +43,7 @@ namespace Repository.FileSystem
                 Assert.AreEqual(0, repo.Items.Count());
             }
         }
-        //================================================================================
+        //===============================================================
         [Test]
         public void LockingTest()
         {
@@ -73,7 +73,51 @@ namespace Repository.FileSystem
                 }
             });
         }
-        //================================================================================
+        //===============================================================
+        [Test]
+        public void Backup()
+        {
+            var implicitKeyRepo = new FileSystemRepository<TestClass>("Test", x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "BackupTests/SingleFile" });
+            var multipleFileRepo = new FileSystemRepository<TestClass>("Test", x => x.ID, new FileSystemOptions<TestClass> { FolderPath = "BackupTests/FilePerObject", FileStorageType = FileStorageType.FilePerObject });
+
+            var expectedSingleFilePath = "BackupTests/SingleFile/backup/" + DateTime.Today.ToString("yyyyMMdd");
+            var expectedFilePerObjectPath = "BackupTests/FilePerObject/Test/backup/" + DateTime.Today.ToString("yyyyMMdd");
+
+            try
+            {
+
+                var obj = new TestClass("key", "value");
+                implicitKeyRepo.Insert(obj);
+                multipleFileRepo.Insert(obj);
+
+                implicitKeyRepo.SaveChanges();
+                multipleFileRepo.SaveChanges();
+
+                implicitKeyRepo.CreateBackup();
+                multipleFileRepo.CreateBackup();
+
+                Assert.IsTrue(Directory.Exists(expectedSingleFilePath) && Directory.EnumerateFiles(expectedSingleFilePath).Any());
+                Assert.IsTrue(Directory.Exists(expectedFilePerObjectPath) && Directory.EnumerateFiles(expectedFilePerObjectPath).Any());
+            }
+
+            catch (Exception)
+            {
+                throw;
+            }
+
+            finally
+            {
+                Directory.Delete(expectedSingleFilePath, true);
+                Directory.Delete(expectedFilePerObjectPath, true);
+
+                implicitKeyRepo.RemoveAll();
+                multipleFileRepo.RemoveAll();
+
+                implicitKeyRepo.SaveChanges();
+                multipleFileRepo.SaveChanges();
+            }
+        }
+        //===============================================================
     }
 
 

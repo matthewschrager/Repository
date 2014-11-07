@@ -31,6 +31,7 @@ namespace Repository.FileSystem
         public abstract bool Exists(IEnumerable<Object> keys);
         public abstract void DeleteObject(IEnumerable<Object> keys);
         public abstract IEnumerable<T> EnumerateObjects();
+        public abstract void CreateBackup();
 
         protected static Object GetFileLock(String path)
         {
@@ -111,9 +112,9 @@ namespace Repository.FileSystem
                 return Options.FolderPath;
         }
         //===============================================================
-        private String GetRepositoryPath()
+        private String GetRepositoryPath(bool isBackup = false)
         {
-            return Path.Combine(GetBaseFolderPath(), SanitizeName(RepositoryName, Path.GetInvalidFileNameChars())) + Options.FileExtension;
+            return Path.Combine(GetBaseFolderPath(), isBackup ? "backup/" + DateTime.Today.ToString("yyyyMMdd") : "", SanitizeName(RepositoryName, Path.GetInvalidFileNameChars())) + Options.FileExtension;
         }
         //===============================================================
         public override void StoreObject(T value, IEnumerable<object> keys)
@@ -124,7 +125,7 @@ namespace Repository.FileSystem
 
             SaveObjects(objects.Values, GetRepositoryPath());
         }
-        //================================================================================
+        //===============================================================
         public override void StoreObjects(IEnumerable<KeyValuePair<IEnumerable<object>, T>> keyValuePairs)
         {
             var objects = RetrieveObjects(GetRepositoryPath()).ToDictionary(x => GetObjectKey(KeySelector(x)));
@@ -168,6 +169,20 @@ namespace Repository.FileSystem
             return RetrieveObjects(GetRepositoryPath());
         }
         //===============================================================
+        public override void CreateBackup()
+        {
+            var path = GetRepositoryPath();
+            if (!File.Exists(path))
+                return;
+
+            var backupPath = GetRepositoryPath(true);
+            var backupDir = Path.GetDirectoryName(backupPath);
+            if (!Directory.Exists(backupDir))
+                Directory.CreateDirectory(backupDir);
+
+            File.Copy(path, backupPath, true);
+        }
+        //===============================================================
     }
 
     internal class MultipleFileSystemInterface<T> : FileSystemInterface<T>
@@ -176,9 +191,9 @@ namespace Repository.FileSystem
             : base(repoName, keySelector, options)
         {}
 
-        private String GetRepositoryFolder()
+        private String GetRepositoryFolder(bool isBackup)
         {
-            return Path.Combine(Options.FolderPath, SanitizeName(RepositoryName, Path.GetInvalidPathChars()));
+            return Path.Combine(Options.FolderPath, SanitizeName(RepositoryName, Path.GetInvalidPathChars()), isBackup ? "backup/" + DateTime.Today.ToString("yyyyMMdd") : "");
         }
 
         private String GetObjectKey(IEnumerable<Object> keys)
@@ -187,9 +202,9 @@ namespace Repository.FileSystem
             return SanitizeName(key, Path.GetInvalidFileNameChars());
         }
 
-        private String GetObjectPath(IEnumerable<object> keys)
+        private String GetObjectPath(IEnumerable<object> keys, bool isBackup = false)
         {
-            return Path.Combine(GetRepositoryFolder(), GetObjectKey(keys)) + Options.FileExtension;
+            return Path.Combine(GetRepositoryFolder(isBackup), GetObjectKey(keys)) + Options.FileExtension;
         }
 
         public override void StoreObject(T value, IEnumerable<object> keys)
@@ -221,13 +236,24 @@ namespace Repository.FileSystem
 
         public override IEnumerable<T> EnumerateObjects()
         {
-            var folderPath = GetRepositoryFolder();
+            var folderPath = GetRepositoryFolder(false);
             if (!Directory.Exists(folderPath))
                 yield break;
 
             var files = Directory.EnumerateFiles(folderPath);
             foreach (var f in files)
                 yield return RetrieveObjects(f).First();
+        }
+
+        public override void CreateBackup()
+        {
+            var backupFolder = GetRepositoryFolder(true);
+            if (!Directory.Exists(backupFolder))
+                Directory.CreateDirectory(backupFolder);
+
+            var repositoryFolder = GetRepositoryFolder(false);
+            foreach (var file in Directory.EnumerateFiles(repositoryFolder))
+                File.Copy(file, Path.Combine(backupFolder, Path.GetFileName(file)));
         }
     }
 }
