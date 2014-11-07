@@ -98,6 +98,13 @@ namespace Repository.FileSystem
 
                 Assert.IsTrue(Directory.Exists(expectedSingleFilePath) && Directory.EnumerateFiles(expectedSingleFilePath).Any());
                 Assert.IsTrue(Directory.Exists(expectedFilePerObjectPath) && Directory.EnumerateFiles(expectedFilePerObjectPath).Any());
+
+                // Try again to make sure we don't have any issues with overwriting existing files
+                implicitKeyRepo.CreateBackup();
+                multipleFileRepo.CreateBackup();
+
+                Assert.IsTrue(Directory.Exists(expectedSingleFilePath) && Directory.EnumerateFiles(expectedSingleFilePath).Any());
+                Assert.IsTrue(Directory.Exists(expectedFilePerObjectPath) && Directory.EnumerateFiles(expectedFilePerObjectPath).Any());
             }
 
             catch (Exception)

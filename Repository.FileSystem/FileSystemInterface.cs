@@ -253,7 +253,7 @@ namespace Repository.FileSystem
 
             var repositoryFolder = GetRepositoryFolder(false);
             foreach (var file in Directory.EnumerateFiles(repositoryFolder))
-                File.Copy(file, Path.Combine(backupFolder, Path.GetFileName(file)));
+                File.Copy(file, Path.Combine(backupFolder, Path.GetFileName(file)), true);
         }
     }
 }
