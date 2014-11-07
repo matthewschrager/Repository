@@ -91,6 +91,11 @@ namespace Repository.FileSystem
             : base(new FileSystemRepository<TValue>(name, x => new object[] { keySelector(x).Item1, keySelector(x).Item2 }, options))
         {}
         //===============================================================
+        public void CreateBackup()
+        {
+            (InnerRepository as FileSystemRepository<TValue>).CreateBackup();
+        }
+        //===============================================================
     }
 
     // Explicit key implementations
@@ -100,6 +105,11 @@ namespace Repository.FileSystem
         public ExplicitKeyFileSystemRepository(String name, FileSystemOptions<T> options = null)
             : base(new FileSystemRepository<T>(name, NullKeySelector, options))
         {}
+        //===============================================================
+        public void CreateBackup()
+        {
+            (InnerRepository as FileSystemRepository<T>).CreateBackup();
+        }
         //===============================================================
 
     }
@@ -111,6 +121,11 @@ namespace Repository.FileSystem
             : base(new FileSystemRepository<TValue>(name, NullKeySelector, options))
         { }
         //===============================================================
+        public void CreateBackup()
+        {
+            (InnerRepository as FileSystemRepository<TValue>).CreateBackup();
+        }
+        //===============================================================
     }
 
     public class ExplicitKeyFileSystemRepository<TValue, TKey1, TKey2> : ExplicitKeyRepository<TValue, TKey1, TKey2>
@@ -119,6 +134,11 @@ namespace Repository.FileSystem
         public ExplicitKeyFileSystemRepository(String name, FileSystemOptions<TValue> options = null)
             : base(new FileSystemRepository<TValue>(name, NullKeySelector, options))
         { }
+        //===============================================================
+        public void CreateBackup()
+        {
+            (InnerRepository as FileSystemRepository<TValue>).CreateBackup();
+        }
         //===============================================================
     }
 }

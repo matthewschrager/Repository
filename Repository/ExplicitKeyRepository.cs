@@ -11,22 +11,22 @@ namespace Repository
         protected static readonly Func<T, object[]> NullKeySelector = x => new object[] { }; 
 
         //===============================================================
-        public ExplicitKeyRepository(Repository<T> implicitKeyRepository)
+        public ExplicitKeyRepository(Repository<T> innerRepository)
         {
-            ImplicitKeyRepository = implicitKeyRepository;
+            InnerRepository = innerRepository;
 
             // We allow change tracking to be ignored ONLY for string repositories, because String has no
             // default constructor (and so cannot be change-tracked) but we still want to allow strings to be stored
             // with explicit keys
-            ImplicitKeyRepository.IgnoreChangeTracking = typeof(T) == typeof(String);
+            InnerRepository.IgnoreChangeTracking = typeof(T) == typeof(String);
         }
         //===============================================================
-        public Repository<T> ImplicitKeyRepository { get; private set; }
+        public Repository<T> InnerRepository { get; private set; }
         //===============================================================
         public void Insert(T value, params object[] keys)
         {
-            ImplicitKeyRepository.SetKeySelector(x => keys);
-            ImplicitKeyRepository.Insert(value);
+            InnerRepository.SetKeySelector(x => keys);
+            InnerRepository.Insert(value);
         }
         //===============================================================
         public void Insert(IEnumerable<Tuple<object[], T>> values)
@@ -37,7 +37,7 @@ namespace Repository
         //===============================================================
         public void RemoveByKey(params object[] keys)
         {
-            ImplicitKeyRepository.RemoveByKey(keys);
+            InnerRepository.RemoveByKey(keys);
         }
         //===============================================================
         public void RemoveAllByKey(IEnumerable<object[]> keys)
@@ -48,27 +48,27 @@ namespace Repository
         //===============================================================
         public void SaveChanges()
         {
-            ImplicitKeyRepository.SaveChanges();
+            InnerRepository.SaveChanges();
         }
         //===============================================================
         public bool ExistsByKey(params object[] keys)
         {
-            return ImplicitKeyRepository.ExistsByKey(keys);
+            return InnerRepository.ExistsByKey(keys);
         }
         //===============================================================
         public ObjectContext<T> Find(params object[] keys)
         {
-            return ImplicitKeyRepository.Find(keys);
+            return InnerRepository.Find(keys);
         }
         //===============================================================
         public EnumerableObjectContext<T> Items
         {
-            get { return ImplicitKeyRepository.Items; }
+            get { return InnerRepository.Items; }
         }
         //===============================================================
         public void Dispose()
         {
-            ImplicitKeyRepository.Dispose();
+            InnerRepository.Dispose();
         }
         //===============================================================
     }
