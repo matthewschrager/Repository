@@ -82,6 +82,11 @@ namespace Repository.FileSystem
             : base(new FileSystemRepository<TValue>(name, x => keySelector(x), options))
         {}
         //===============================================================
+        public void CreateBackup()
+        {
+            (InnerRepository as FileSystemRepository<TValue>).CreateBackup();
+        }
+        //===============================================================
     }
 
     public class FileSystemRepository<TValue, TKey1, TKey2> : Repository<TValue, TKey1, TKey2>
