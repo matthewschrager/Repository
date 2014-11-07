@@ -58,10 +58,9 @@ namespace Repository.FileSystem
                 if (!File.Exists(filePath))
                     return new List<T>();
 
-                using (var reader = new StreamReader(Options.StreamGenerator.GetReadStream(filePath)))
+                using (var stream = Options.StreamGenerator.GetReadStream(filePath))
                 {
-                    var str = reader.ReadToEnd();
-                    var objects = Options.Serializer.Deserialize(str);
+                    var objects = Options.Serializer.Deserialize(stream);
                     return objects;
                 }
             }
@@ -74,10 +73,10 @@ namespace Repository.FileSystem
                 if (!String.IsNullOrWhiteSpace(Path.GetDirectoryName(filePath)) && !Directory.Exists(Path.GetDirectoryName(filePath)))
                     Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
-                using (var writer = new StreamWriter(Options.StreamGenerator.GetWriteStream(filePath)))
+                using (var stream = Options.StreamGenerator.GetWriteStream(filePath))
                 {
-                    writer.Write(Options.Serializer.Serialize(objects));
-                    writer.Flush();
+                    Options.Serializer.Serialize(objects.ToList(), stream);
+                    stream.Flush();
                 }
             }
         }

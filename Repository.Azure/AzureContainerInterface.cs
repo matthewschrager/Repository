@@ -51,27 +51,21 @@ namespace Repository.Azure
             using (var stream = new MemoryStream())
             {
                 block.DownloadToStream(stream);
-                using (var reader = new StreamReader(stream))
-                {
-                    var obj = Options.Serializer.Deserialize(reader.ReadToEnd());
-                    return obj;
-                }
+                var obj = Options.Serializer.Deserialize(stream);
+                return obj;
             }
         }
         //===============================================================
         public void StoreObject(T value, IEnumerable<Object> keys)
         {
             var block = GetBlock(keys);
-            var encodedValue = Options.Serializer.Serialize(value);
             using (var stream = new MemoryStream())
             {
-                using (var writer = new StreamWriter(stream))
-                {
-                    writer.Write(encodedValue);
-                    stream.Seek(0, SeekOrigin.Begin);
+                Options.Serializer.Serialize(value, stream);
+                stream.Seek(0, SeekOrigin.Begin);
+                stream.Seek(0, SeekOrigin.Begin);
 
-                    block.UploadFromStream(stream);
-                }
+                block.UploadFromStream(stream);
             }
 
             if (!String.IsNullOrWhiteSpace(Options.ContentType))

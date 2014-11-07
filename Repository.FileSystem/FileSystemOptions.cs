@@ -14,7 +14,7 @@ namespace Repository.FileSystem
         //===============================================================
         public FileSystemOptions()
         {
-            Serializer = new JsonSerializer<IEnumerable<T>>();
+            Serializer = new JsonSerializer<List<T>>();
             FolderPath = "";
             FileExtension = ".txt";
             StreamGenerator = new StandardStreamGenerator();
@@ -22,7 +22,7 @@ namespace Repository.FileSystem
             FileStorageType = FileStorageType.SingleFile;
         }
         //===============================================================
-        public ISerializer<IEnumerable<T>> Serializer { get; set; }
+        public ISerializer<List<T>> Serializer { get; set; }
         //===============================================================
         public String FolderPath { get; set; }
         //===============================================================

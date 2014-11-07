@@ -1,13 +1,14 @@
 using System;
+using System.IO;
 
 namespace Repository.Serialization
 {
     public interface ISerializer<T>
     {
         //===============================================================
-        String Serialize(T obj);
+        void Serialize(T obj, Stream stream);
         //===============================================================
-        T Deserialize(String str);
+        T Deserialize(Stream stream);
         //===============================================================
     }
 }

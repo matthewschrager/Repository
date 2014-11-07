@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
 
 namespace Repository.Serialization
@@ -7,14 +8,16 @@ namespace Repository.Serialization
     public class JsonSerializer<T> : ISerializer<T>
     {
         //===============================================================
-        public String Serialize(T obj)
+        public void Serialize(T obj, Stream stream)
         {
-            return JsonConvert.SerializeObject(obj);
+            var writer = new StreamWriter(stream);
+            writer.Write(JsonConvert.SerializeObject(obj));
+            writer.Flush();
         }
         //===============================================================
-        public T Deserialize(String str)
+        public T Deserialize(Stream stream)
         {
-            return JsonConvert.DeserializeObject<T>(str);
+            return JsonConvert.DeserializeObject<T>(new StreamReader(stream).ReadToEnd());
         }
         //===============================================================
     }

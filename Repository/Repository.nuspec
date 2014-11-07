@@ -14,7 +14,8 @@
     <tags>Repository</tags>
     <dependencies>
       <dependency id="AutoMapper"></dependency>
-      <dependency id="CompareNETObjects">         </dependency>
+      <dependency id="CompareNETObjects"></dependency>
+      <dependency id="Newtonsoft.Json"></dependency>
     </dependencies>
   </metadata>
 </package>
