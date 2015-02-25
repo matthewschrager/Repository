@@ -32,11 +32,11 @@
 //                and position.
 
 
-
 namespace Microsoft.Samples.EntityDataReader
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations.Schema;
     using System.Data;
     using System.Data.Common;
     using System.Data.Metadata.Edm;
@@ -330,7 +330,11 @@ namespace Microsoft.Samples.EntityDataReader
 
             }
 
-            return allProperties.Select(p => new Attribute(p)).ToList();
+            // only return properties which do not have the NotMapped attribute in the data model
+            return allProperties
+                .Where(p => p.GetCustomAttribute(typeof(NotMappedAttribute), true) == null)
+                .Select(p => new Attribute(p))
+                .ToList();
 
         }
         static List<Attribute> DiscoverRelatedObjectKeyAttributes(Type thisType, ObjectContext objectContext)
