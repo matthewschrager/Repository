@@ -10,7 +10,7 @@ Implementations
 
 This (code) repository comes with a few Repository implementations. The first and simplest is ```InMemoryRepository```, which acts as a temporary in-memory store useful mainly for testing. 
 The second is an Entity Framework repository named ```EFRepository```, which uses [Entity Framework](http://msdn.microsoft.com/en-us/data/ef.aspx) as its 
-storage interface. The thid is ```AzureRepository```, an implementation of ```Repository``` for [Azure Blob Storage](http://www.windowsazure.com/en-us/manage/services/storage/).
+storage interface. The third is ```AzureRepository```, an implementation of ```Repository``` for [Azure Blob Storage](http://www.windowsazure.com/en-us/manage/services/storage/).
 And the fourth is ```FileSystemRepository```, an implementation that serializes objects directly to the filesystem.
 
 
@@ -366,7 +366,7 @@ public abstract EnumerableObjectContext<T> Items { get; }
 //===============================================================
 ```
 
-```FindImpl``` is reponsible for looking up an object from the underlying data store,
+```FindImpl``` is responsible for looking up an object from the underlying data store,
 ```ExistsByKey``` is responsible for checking for an object's existence by its key values,
 and ```Items``` is responsible for enumerating the objects in the repository. These will likely
 call methods directly on the underlying data store or make use of some sort of interface such as 
